@@ -20,7 +20,9 @@ class RePAIRDataset(DownloadableDatasetBase):
 
         
         self.sample_folders = [p for p in self.data_path.iterdir() if p.is_dir() and p.name.startswith("puzzle_")]
-
+        # sort puzzles, better for reproducibility
+        self.sample_folders = sorted(self.sample_folders, key=lambda p: str(p))
+        # split using split
         self._split(split)
 
 
@@ -39,7 +41,7 @@ class RePAIRDataset(DownloadableDatasetBase):
                 raise ValueError(f"Unknown split: {split}")
 
             self.sample_folders = [p for p in self.sample_folders if p.name in selected]
-
+   
     def __len__(self):
         return len(self.sample_folders)
 
@@ -52,9 +54,12 @@ class RePAIRDataset(DownloadableDatasetBase):
         for i,frag in enumerate(data['fragments']):
             data['fragments'][i]['image_path'] = os.path.join(str(puzzle_folder), frag['filename'].replace('.obj', '.png'))
 
-        X = [{
+        out = {'name': puzzle_folder.name,
+             'fragments': [{
                 'idx': frag['idx'],
                 'image_path': frag['image_path'],
-            } for frag in data['fragments']]
+            } for frag in data['fragments']],
+            'data': data,
+            }
 
-        return X,data
+        return out

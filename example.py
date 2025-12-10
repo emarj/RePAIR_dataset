@@ -1,6 +1,6 @@
 from repair_dataset import RePAIRDataset
 
-dataset = RePAIRDataset("./dataset", split="train")
+dataset = RePAIRDataset("../datasets/RePAIR_dataset/v2", split="train")
 
 print(f"Number of samples: {len(dataset)}")
 sample = dataset[8]
