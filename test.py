@@ -1,9 +1,10 @@
 from repair_dataset import RePAIRDataset
 from repair_dataset.split import train_split, test_split
 
+TEST_DS_PATH = ".dataset"
 
 def test_splits() -> None:
-    dataset = RePAIRDataset("./dataset")
+    dataset = RePAIRDataset(TEST_DS_PATH)
     assert len(set(test_split)) == len(test_split)
     assert len(set(train_split)) == len(train_split)
 
@@ -13,8 +14,8 @@ def test_splits() -> None:
 
 def test_dataset() -> None:
   
-    dataset_train = RePAIRDataset("./dataset", split="train")
-    dataset_test = RePAIRDataset("./dataset", split="test")
+    dataset_train = RePAIRDataset(TEST_DS_PATH, split="train")
+    dataset_test = RePAIRDataset(TEST_DS_PATH, split="test")
 
     assert len(dataset_train) == len(train_split)
     assert len(dataset_test) == len(test_split)
