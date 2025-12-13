@@ -1,5 +1,6 @@
-import json
+import numpy as np
 
-def load_data_json(json_path:str) -> dict:
-    with open(json_path, 'r') as f:
-        return json.load(f)
+def centroid_rgba(img):
+    a = np.array(img)[:, :, 3]        # alpha channel
+    ys, xs = np.where(a > 0)          # foreground pixels
+    return xs.mean(), ys.mean()
