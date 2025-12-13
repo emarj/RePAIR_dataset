@@ -1,7 +1,7 @@
 [project]
 name = "repair-dataset"
 version = "0.1.0"
-description = "Add your description here"
+description = ""
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
@@ -14,7 +14,4 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
-]
-eval = [
-    "pillow>=10.4.0",
 ]

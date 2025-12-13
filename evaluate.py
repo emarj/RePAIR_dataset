@@ -1,10 +1,13 @@
-from PIL import Image
-import numpy as np
-from pathlib import Path
-from repair_dataset.utils import centroid_rgba
-from repair_dataset.dataset import RePAIRDataset
-from tqdm import tqdm
 import argparse
+from pathlib import Path
+
+from tqdm import tqdm
+
+import numpy as np
+from PIL import Image
+
+from repair_dataset import RePAIRDataset
+from repair_dataset.utils import centroid_rgba
 
 
 def save_resized(image, path, downsize_factor=4):
@@ -64,9 +67,9 @@ def evaluate_puzzle(data):
 
 
 
-def evaluate_gt(dataset_path, managed=True, filter = [], version='v2', save_images=False):
+def evaluate_gt(dataset_path, managed_mode=True, filter = [], version='v2', save_images=False):
     print('Loading dataset...')
-    dataset = RePAIRDataset(dataset_path, version=version, supervised_mode=False, managed=managed)
+    dataset = RePAIRDataset(dataset_path, version=version, supervised_mode=False, managed_mode=managed_mode)
     dataset._filter(filter)
     print(f"Found {len(dataset)} puzzles")
 
@@ -112,14 +115,14 @@ def main():
     ]
 
     parser = argparse.ArgumentParser(description="Evaluate RePAIR dataset against ground truth images")
-    parser.add_argument('dataset_path', nargs='?', default=".dataset/RePAIR_v2", help="Path to dataset")
-    parser.add_argument('--managed', dest='managed', action='store_true', help='Use managed dataset', default=True)
+    parser.add_argument('dataset_path', default=".dataset/RePAIR_v2", help="Path to dataset")
+    parser.add_argument('--managed_mode', dest='managed_mode', action='store_true', help='Use managed_mode dataset', default=True)
     parser.add_argument('--filter', nargs='*', default=default_filter, help='List of puzzle names to include')
-    parser.add_argument('--version', default='v2', help='Dataset version')
+    parser.add_argument('--version', required=True, help='Dataset version')
     parser.add_argument('--save-images', action='store_true', default=False, help='Save solution and diff images')
     args = parser.parse_args()
 
-    evaluate_gt(args.dataset_path, managed=args.managed, filter=args.filter, version=args.version, save_images=args.save_images)
+    evaluate_gt(args.dataset_path, managed_mode=args.managed_mode, filter=args.filter, version=args.version, save_images=args.save_images)
 
 
 

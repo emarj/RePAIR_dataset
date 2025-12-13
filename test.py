@@ -1,5 +1,5 @@
 from repair_dataset import RePAIRDataset
-from repair_dataset.splits.splits import train_split, test_split
+from repair_dataset.splits import train_split, test_split
 
 TEST_DS_PATH = ".dataset/RePAIR_v2"
 

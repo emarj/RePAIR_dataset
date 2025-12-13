@@ -19,7 +19,7 @@ class RePAIRDataset:
     """Dataset access class for RePAIR puzzles.
 
     Usage
-    - Instantiate with the dataset root (or let DataManager manage extraction by setting managed=True).
+    - Instantiate with the dataset root (or let DataManager manage extraction by setting managed_mode=True).
     - Index by integer or puzzle name (string) to obtain the puzzle metadata (and images if supervised_mode=True).
     - Use as an iterator to walk puzzles in the active split.
 
@@ -32,14 +32,14 @@ class RePAIRDataset:
                               in-memory PIL Images for fragments and `data` is the original metadata dict.
                               - x: {'name': <puzzle_name>, 'fragments': [{'idx': int, 'name': str, 'image': PIL.Image}, ...]}
                               - data: original parsed JSON as a dict (with 'path' and 'name' injected for v2 variants).
-    - managed (bool): if True the DataManager will be used to ensure data is present and patched.
+    - managed_mode (bool): if True the DataManager will be used to ensure data is present and patched.
     - from_scratch (bool): passed to DataManager to force a fresh extraction.
     - skip_verify (bool): passed to DataManager to skip integrity checks.
 
     Behavior & Notes
     - The loader expects each puzzle to reside in a folder named 'puzzle_<id>' with a data.json file.
     - For v2 series, fragment filenames in the JSON may be .obj while on-disk images are .png; supervised_mode handles this `.obj`->`.png` mapping.
-    - When managed=True the constructor may raise on missing or corrupted data; when unmanaged and no data found a RuntimeError is raised.
+    - When managed_mode=True the constructor may raise on missing or corrupted data; when unmanaged and no data found a RuntimeError is raised.
     - Supports iteration protocol (__iter__/__next__), __len__, and __getitem__ with int or str keys.
     """
 

@@ -1,4 +1,4 @@
-from repair_dataset.dataset import RePAIRDataset
+from repair_dataset import RePAIRDataset
 
 def main():
 
