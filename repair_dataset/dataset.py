@@ -3,16 +3,18 @@ import json
 
 from typing import Union
 
-from .patches.patch_v3_beta import patch_v3_beta
-from .patches.patch_v2_0_1 import patch_v2_0_1
-from .patches.patch_v2_0_2 import patch_v2_0_2
-
 from .splits.splits import train_split, test_split
 
 from .manager import DataManager
+from .version_type import VersionType
 
-DEFAULT_VERSION = 'v2.0.1'
-SUPPORTED_VERSIONS = ['v2', 'v2.0.1', 'v2.0.2', 'v3-beta']
+from .data import (
+    DEFAULT_VERSION,
+    DEFAULT_TYPE,
+    SUPPORTED_VERSIONS_TYPES,
+    PATCH_MAP,
+    REMOTES,
+)
 
 
 class RePAIRDataset:
@@ -20,12 +22,12 @@ class RePAIRDataset:
 
     Usage
     - Instantiate with the dataset root (or let DataManager manage extraction by setting managed_mode=True).
-    - Index by integer or puzzle name (string) to obtain the puzzle metadata (and images if supervised_mode=True).
+    - Index by integer or puzzle name (string) to obtain the puzzle metadata (and images if managed_mode=True).
     - Use as an iterator to walk puzzles in the active split.
 
     Parameters
     - root (str or Path): path to the dataset root folder. In manaeged mode, this is where data will be downloaded/extracted.
-    - version (str): dataset version. Supported versions are: 'v2', 'v2.0.1', 'v2.0.2', 'v3-beta'.
+    - version (str): dataset version. Supported versions are: 'v2', 'v2.0.1', 'v2.0.2', 'v2.5b'.
     - split (None|'train'|'test'): optional dataset split.
     - supervised_mode (bool): if False (default) __getitem__ returns parsed metadata dict.
                               if True, __getitem__ returns a tuple (x, data) where `x` contains
@@ -45,10 +47,11 @@ class RePAIRDataset:
 
     def __init__(self,
                  root,
-                 version="",
-                 split=None,
-                 supervised_mode=False,
+                 version=None,
+                 type_=None,
                  managed_mode=True,
+                 split=None,
+                 supervised_mode=True,
                  from_scratch=False,
                  skip_verify=False) -> None:
         
@@ -61,43 +64,62 @@ class RePAIRDataset:
         # iterator state
         self._iter_idx = 0
         
-        self.version = version
-        if self.version == "" or self.version is None:
+        
+        if version is None:
             if managed_mode:
-                # if we manage the data, we set the default version
-                self.version = DEFAULT_VERSION
+                # if we manage the data, we set the default version type
+                version = DEFAULT_VERSION
             else:
                 raise RuntimeError("When managed_mode is False, version must be specified.")
-            
-        if version not in SUPPORTED_VERSIONS:
-            raise RuntimeError(f"Unsupported dataset version {version}. Supported versions are: {SUPPORTED_VERSIONS}")
+        
+        if type_ is None:
+            if managed_mode:
+                # if we manage the data, we set the default version type
+                type_ = DEFAULT_TYPE
+            else:
+                raise RuntimeError("When managed_mode is False, type_ must be specified.")
+
+        self.version_type = VersionType(version, type_)
+
+        if not self.version_type.supported(SUPPORTED_VERSIONS_TYPES):
+            raise RuntimeError(f"Unsupported dataset version_type {self.version_type}. Supported versions are:\n {SUPPORTED_VERSIONS_TYPES}")
         
         if managed_mode:
-            patch_map = {
-            'v2.0.1': [patch_v2_0_1],
-            'v2.0.2': [patch_v2_0_1, patch_v2_0_2],
-            'v3-beta': [patch_v3_beta],
-            }
+            mvt = self.version_type.major_version_type()
+            remote = REMOTES.get(mvt, None)
+
+            if remote is None:
+                raise RuntimeError(f"Remote missing for major version_type {mvt}.")
 
             self.datamanager = DataManager(
                 root=self.root,
-                version=version,
+                version_type=self.version_type,
+                remote=remote,
                 from_scratch=from_scratch,
                 skip_verify=skip_verify,
-                patch_map=patch_map,
+                patch_map=PATCH_MAP,
             )
 
         ################### Load dataset ###################
 
+        print(f'Loading RePAIRDataset {self.version_type}')
+
         self.data_path = self.datamanager.data_path if managed_mode else self.root
-    
+        
+        err_msg = "Check the specified root folder is correct. If the error persist, try to recreate the dataset running with from_scratch=True or by deleting the root folder."
+        if not self.data_path.exists():
+            if managed_mode:
+                raise RuntimeError(f"Cannot find data folder. {err_msg}")
+            else:
+                raise RuntimeError("Dataset path does not exist. Check the specified root folder is correct.")
+
         self.puzzle_folders_list = [p for p in self.data_path.iterdir() if p.is_dir() and p.name.startswith("puzzle_")]
 
         self._make_split()
 
         if len(self) == 0:
             if managed_mode:
-                raise RuntimeError("No data found after extraction. The dataset may be corrupted.")
+                raise RuntimeError(f"No data found after extraction. The dataset may be corrupted. {err_msg}")
             else:
                 raise RuntimeError("No data found in the specified root folder.")
     
@@ -156,7 +178,7 @@ class RePAIRDataset:
         with open(json_path, 'r') as f:
             data = json.load(f)
         
-        if self.version.startswith('v2'):
+        if self.version_type.version.major_str() == 'v2':
             # add names
             data['name'] = puzzle_name
             for i,frag in enumerate(data['fragments']):

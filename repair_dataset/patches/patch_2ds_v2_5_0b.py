@@ -6,10 +6,10 @@ import json
 import argparse
 import shutil
 
-def patch_v3_beta(dataset_path : str) -> None:
-    convert_to_v3(dataset_path, patch_mode=True)
+def patch_2ds_v2_5_0b(dataset_path : str) -> None:
+    convert_to_v2_5b(dataset_path, patch_mode=True)
 
-def convert_to_v3(dataset_path,output_path=None,in_place=False,patch_mode=False):
+def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=False):
 
         if not patch_mode:
             if in_place and output_path is not None:
@@ -36,7 +36,7 @@ def convert_to_v3(dataset_path,output_path=None,in_place=False,patch_mode=False)
         
         data = {}
 
-        for puzzle_folder in tqdm(puzzle_folders, desc="Converting to v3-beta"):
+        for puzzle_folder in tqdm(puzzle_folders, desc="Converting to v2.5b"):
             puzzle_name = puzzle_folder.name
 
             with open(puzzle_folder / 'data.json','r') as f:
@@ -45,7 +45,7 @@ def convert_to_v3(dataset_path,output_path=None,in_place=False,patch_mode=False)
 
             data = {
                 'name' : puzzle_name,
-                'dataset_version' : 'v3-beta',
+                'dataset_version' : 'v2.5b',
                 'fragments' : [],
                 'adjacency': sample['adjacency'],
             }
@@ -80,7 +80,7 @@ def convert_to_v3(dataset_path,output_path=None,in_place=False,patch_mode=False)
             if not in_place: 
                 output_json_path = new_puzzle_folder / 'data.json'
             else:
-                output_json_path = new_puzzle_folder / 'data_v3.json'
+                output_json_path = new_puzzle_folder / 'data_v2_5b.json'
             
             with open(output_json_path, 'w') as f:
                 json.dump(data, f, indent=4)
@@ -108,4 +108,4 @@ if __name__ == "__main__":
     argparser.add_argument('--in-place', action='store_true',default=False, help="Overwrite data in place")
     args = argparser.parse_args()
 
-    convert_to_v3(args.dataset_path, args.output_path, args.in_place)
+    convert_to_v2_5b(args.dataset_path, args.output_path, args.in_place)

@@ -2,11 +2,12 @@ from repair_dataset import RePAIRDataset
 
 def main():
 
-    dataset = RePAIRDataset('.dataset/RePAIR_v2/v2.0.2/SOLVED',
-                               version='v2.0.2',
+    dataset = RePAIRDataset('.dataset/RePAIR',
+                               version='v2',
+                               type_='2D_SOLVED',
                                split='test',
                                from_scratch=False,
-                               managed_mode=False)
+                               supervised_mode=True)
 
     print(f"Number of samples in dataset: {len(dataset)}")
     

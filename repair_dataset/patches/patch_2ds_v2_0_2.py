@@ -4,7 +4,7 @@ from tqdm import tqdm
 import argparse
 
 
-def patch_v2_0_2(data_path : str) -> None:
+def patch_2ds_v2_0_2(data_path : str) -> None:
 
     puzzle_folders = [p for p in Path(data_path).iterdir() if p.is_dir() and p.name.startswith("puzzle_")]
 
@@ -33,7 +33,7 @@ def main() -> None:
     print("Continuing...")
 
     print('Applying v2.0.2 patch..')
-    patch_v2_0_2(args.input_folder)
+    patch_2ds_v2_0_2(args.input_folder)
     print('Patch applied.')
 
 

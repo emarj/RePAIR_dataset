@@ -67,9 +67,17 @@ def evaluate_puzzle(data):
 
 
 
-def evaluate_gt(dataset_path, managed_mode=True, filter = [], version='v2', save_images=False):
+def evaluate_gt(dataset_path,
+                managed_mode=True,
+                filter = [],
+                version=None,
+                from_scratch=False,
+                save_images=False):
     print('Loading dataset...')
-    dataset = RePAIRDataset(dataset_path, version=version, supervised_mode=False, managed_mode=managed_mode)
+    dataset = RePAIRDataset(dataset_path,
+                            version=version,
+                            managed_mode=managed_mode,
+                            from_scratch=from_scratch)
     dataset._filter(filter)
     print(f"Found {len(dataset)} puzzles")
 
@@ -87,7 +95,8 @@ def evaluate_gt(dataset_path, managed_mode=True, filter = [], version='v2', save
         f.write('PuzzleName Difference\n')
 
         for i, data in enumerate(tqdm(dataset, desc="Evaluating puzzles")):
-            if len(filter) and data['name'] not in filter:
+            breakpoint()
+            if len(filter) > 0 and data['name'] not in filter:
                 continue
             delta, img_sol, gt_pil, delta_img = evaluate_puzzle(data)
             f.write(f"{data['name']} {delta:06.2f}\n")
@@ -108,21 +117,24 @@ def evaluate_gt(dataset_path, managed_mode=True, filter = [], version='v2', save
 
 
 def main():
-    default_filter = [
-        'puzzle_0000031_RP_group_30',
-        'puzzle_0000062_RP_group_61',
-        'puzzle_0000059_RP_group_58',
-    ]
-
+    
     parser = argparse.ArgumentParser(description="Evaluate RePAIR dataset against ground truth images")
-    parser.add_argument('dataset_path', default=".dataset/RePAIR_v2", help="Path to dataset")
-    parser.add_argument('--managed_mode', dest='managed_mode', action='store_true', help='Use managed_mode dataset', default=True)
-    parser.add_argument('--filter', nargs='*', default=default_filter, help='List of puzzle names to include')
+    parser.add_argument('--dataset_path', default=".dataset/RePAIR", help="Path to dataset")
+    parser.add_argument('--filter', nargs='*', help='List of puzzle names to include')
     parser.add_argument('--version', required=True, help='Dataset version')
     parser.add_argument('--save-images', action='store_true', default=False, help='Save solution and diff images')
+    parser.add_argument('--no-managed-mode', dest='managed_mode', action='store_false', help='Do not use managed_mode dataset')
+    parser.add_argument('--from-scratch', dest='from_scratch', action='store_true', help='Force fresh extraction (only in managed mode)')
     args = parser.parse_args()
 
-    evaluate_gt(args.dataset_path, managed_mode=args.managed_mode, filter=args.filter, version=args.version, save_images=args.save_images)
+    evaluate_gt(args.dataset_path,
+                managed_mode=args.managed_mode,
+                from_scratch=args.from_scratch,
+                filter=args.filter,
+                version=args.version,
+                save_images=args.save_images,
+                )
+
 
 
 

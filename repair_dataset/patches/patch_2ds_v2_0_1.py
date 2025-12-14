@@ -5,7 +5,7 @@ import argparse
 import warnings
 
 
-def patch_v2_0_1(data_path : str) -> None:
+def patch_2ds_v2_0_1(data_path : str) -> None:
         
     puzzles = [
         'puzzle_0000031_RP_group_30',
@@ -50,7 +50,7 @@ def main() -> None:
     print("Continuing...")
 
     print('Applying v2.0.1 patch..')
-    patch_v2_0_1(args.input_folder)
+    patch_2ds_v2_0_1(args.input_folder)
     print('Patch applied.')
 
 
