@@ -1,4 +1,3 @@
-from typing import Tuple
 import enum
 from pathlib import Path
 import shutil
@@ -8,7 +7,6 @@ from tqdm import tqdm
 
 from .downloader import DownloaderVerifier
 from .version_type import VersionType
-
 
 class Status(enum.Enum):
     NONE = "NONE"
@@ -25,12 +23,12 @@ class DataManager(DownloaderVerifier):
             self.version_type = VersionType.from_str(version_type)
 
         self.root = Path(root)
+
+        write_readme(self.root)
         
         self.extract_path = self.root / self.version_type.type_ / str(self.version_type.version)
         self.data_path = self.extract_path / remote["folder_name"]
         self.status_file_path = self.root / "STATUS"
-
-
 
         self.dv = DownloaderVerifier(
             folder=self.root,
@@ -39,8 +37,6 @@ class DataManager(DownloaderVerifier):
             file_sha256_digest=remote["sha256"],
             skip_checksum=skip_verify,
         )
-
-        
 
         self.patch_map = patch_map if patch_map is not None else {}
 
@@ -138,3 +134,15 @@ def save_kv(file_path, data):
     with open(file_path, "w") as f:
         for key, value in data.items():
             f.write(f"{key}:{value}\n")
+
+##### README to insert into root folder #####
+
+README = """DO NOT TOUCH the contents of this folder unless you know what you are doing. In particular, do not delete the zip archives.
+This folder is managed by a dataset data manager, which handles downloading, verifying, extracting files.
+If something do not work as expected, try to use `from_scratch=True` option or delete the `STATUS` file to force re-download and re-extraction.
+
+This behaviour can be disabled by using unmanaged mode in the dataset, but then you are responsible for having the correct data in place."""
+
+def write_readme(folder_path):
+    with open(folder_path / "README", "w") as f:
+        f.write(README)

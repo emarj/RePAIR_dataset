@@ -69,10 +69,14 @@ def evaluate_puzzle(data):
 
 def evaluate_gt(dataset_path,
                 managed_mode=True,
-                filter = [],
+                filter=None,
                 version=None,
                 from_scratch=False,
                 save_images=False):
+    
+    if filter is None:
+        filter = []
+
     print('Loading dataset...')
     dataset = RePAIRDataset(dataset_path,
                             version=version,
@@ -81,21 +85,19 @@ def evaluate_gt(dataset_path,
     dataset._filter(filter)
     print(f"Found {len(dataset)} puzzles")
 
-    name = f"eval_gt_{version}"
+    name = f"eval_gt_{dataset.version_type}"
     base_path = Path(dataset_path) / name
+    csv_path = Path(dataset_path) / f"{name}.csv"
 
     if save_images:
         base_path.mkdir(parents=True, exist_ok=True)
 
-    
-
     deltas = [-1] * len(dataset)
 
-    with open(base_path.with_suffix(".csv"), "w", buffering=1) as f:
+    with open(csv_path, "w", buffering=1) as f:
         f.write('PuzzleName Difference\n')
 
         for i, data in enumerate(tqdm(dataset, desc="Evaluating puzzles")):
-            breakpoint()
             if len(filter) > 0 and data['name'] not in filter:
                 continue
             delta, img_sol, gt_pil, delta_img = evaluate_puzzle(data)

@@ -51,7 +51,7 @@ class RePAIRDataset:
                  type_=None,
                  managed_mode=True,
                  split=None,
-                 supervised_mode=True,
+                 supervised_mode=False,
                  from_scratch=False,
                  skip_verify=False) -> None:
         
