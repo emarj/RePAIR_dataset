@@ -69,6 +69,9 @@ class DataManager(DownloaderVerifier):
 
     def _extract(self):
 
+        if not self.dv.file_path.exists():
+            raise RuntimeError(f"Cannot extract, file {self.dv.file_path} does not exist.")
+
         if self.extract_path.exists():
             # if we decided to extract, it means we want a fresh copy
             shutil.rmtree(self.extract_path)
