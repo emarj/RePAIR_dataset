@@ -5,8 +5,6 @@ def main():
     dataset = RePAIRDataset('.dataset/RePAIR',
                                version='v2',
                                type_='2D_SOLVED',
-                               split='test',
-                               from_scratch=False,
                                supervised_mode=True)
 
     print(f"Number of samples in dataset: {len(dataset)}")

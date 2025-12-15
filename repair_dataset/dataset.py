@@ -1,15 +1,15 @@
 from pathlib import Path
-import json
-from typing import Union, Tuple
-
-from PIL import Image
+from typing import Union
 
 from .splits.splits import train_split, test_split
 
 from .manager import DataManager
 from .version_type import VersionType
 
-from .data import (
+from .getters.solved2d_getter import getmetadata_2dsolved, getitem_2dsolved
+from .getters.solved3d_getter import getitem_3dsolved
+
+from .info import (
     DEFAULT_VERSION,
     DEFAULT_TYPE,
     SUPPORTED_VERSIONS_TYPES,
@@ -165,76 +165,33 @@ class RePAIRDataset:
         return len(self.puzzle_folders_list)
     
     def _get_metadata(self, key : Union[int, str]) -> dict:
+        puzzle_folder = self._get_puzzle_folder(key)
+        if self.version_type.type_ != '2D_SOLVED':
+            raise NotImplementedError(f"Metadata getter not implemented for dataset type {self.version_type.type_}.")
+        return getmetadata_2dsolved(puzzle_folder)
+
+       
+
+    def _get_puzzle_folder(self, key):
         if isinstance(key, int):
             puzzle_folder = self.puzzle_folders_list[key]
         elif isinstance(key, str):
             puzzle_folder = self.puzzle_folders_list[self.puzzle_folders_map[key]]
         else:
             raise TypeError(f"Invalid key type: {type(key)}")
-
-        json_path = puzzle_folder / "data.json"
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-
-        data['path'] = str(puzzle_folder)
-
-        return data
+        return puzzle_folder
 
     def __getitem__(self, key : Union[int, str]) -> Union[dict, tuple]:
-
+        puzzle_folder = self._get_puzzle_folder(key)
         # this should not happen, but just in case
-        if self.version_type.type_ != '2D_SOLVED' :
+        if self.version_type.type_ == '2D_SOLVED' :
+            return getitem_2dsolved(puzzle_folder, self.supervised_mode)
+        elif self.version_type.type_ == '3D_SOLVED':
+            return getitem_3dsolved(puzzle_folder, self.supervised_mode)
+        else:
             raise NotImplementedError(f"Dataset type {self.version_type.type_} not implemented yet.")
 
-        if self.version_type.version.major() == 1:
-            raise NotImplementedError("v1 datasets are not supported yet.")
-
-        data = self._get_metadata(key)
-
-        puzzle_folder = Path(data['path'])
-
-        puzzle_name = puzzle_folder.name
-
-        metadata_version = data.get('metadata_version', 2)
-
-        
-        if metadata_version == '2':
-            # FIXME: why should we do this? If one wants this they should use a patched dataset
-            # this was done before patches were implemented
-            # removing this would break evaluation script, but maybe the code should be moved there
-            data['name'] = puzzle_name
-            for i,frag in enumerate(data['fragments']):
-                frag_name = Path(frag['filename']).stem
-                data['fragments'][i]['name'] = frag_name
-
-        if not self.supervised_mode:
-            return data
-        
-        ######## SUPERVISED MODE ########
-        
-        # in this case self.supervised_mode is True
-        # we split input and target
-        # x contains in-memory images and few metadata
-        # data contains the original metadata dict with the GT
 
 
-        fragments = []
-        for frag in data['fragments']:
-            # if version less than v2.0.2, filenames are .obj, we need to load .png
-            # TODO: we should check the version properly
-            image_path = puzzle_folder / frag['filename'].replace('.obj', '.png')
-            image = Image.open(image_path).convert('RGBA')
-
-            fragments.append({
-                'idx': frag['idx'],
-                'name': frag.get('name', Path(frag['filename']).stem),
-                'image': image,
-            })
-        
-        x = {
-            'name': puzzle_name,
-            'fragments': fragments,
-        }
-
-
-        return x, data
+    
+   

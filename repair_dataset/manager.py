@@ -37,8 +37,8 @@ class DataManager(DownloaderVerifier):
             folder=self.root,
             data_url=remote["url"],
             filename=remote["filename"],
-            file_sha256_digest=remote["sha256"],
-            skip_checksum=skip_verify,
+            checksum=remote["checksum"],
+            skip_verify=skip_verify,
         )
 
         self.patch_map = patch_map if patch_map is not None else {}

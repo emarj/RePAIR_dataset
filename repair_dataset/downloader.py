@@ -8,16 +8,16 @@ class DownloaderVerifier:
                  folder,
                  data_url,
                  filename,
-                 file_sha256_digest=None,
-                 skip_checksum=False):
+                 checksum=None,
+                 skip_verify=False):
 
         self.folder = Path(folder)
         self.data_url = data_url
         self.file_path = self.folder / filename
-        self.digest = file_sha256_digest
+        self.checksum = checksum
         self.extract_path = self.folder
 
-        self.skip_checksum = skip_checksum
+        self.skip_verify = skip_verify
 
     def download(self):
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -35,7 +35,7 @@ class DownloaderVerifier:
             )
     
     def verify(self, file_path):
-        return verify_checksum(file_path, self.digest, self.skip_checksum)
+        return verify_checksum(file_path, self.checksum, self.skip_verify)
     
 ################# Helper functions #################
 
@@ -43,14 +43,47 @@ def verify_checksum(file_path, expected_digest, skip):
     if skip:
         return True
 
-    return checksum(file_path) == expected_digest
+    # If no expected digest provided, skip verification (accept existing file)
+    if not expected_digest:
+        return True
 
-def checksum(file_path):
-    sha256 = hashlib.sha256()
+    # expected_digest may be like "sha256:abcd..." or just the digest (default to sha256)
+    if ":" in expected_digest:
+        algo, digest = expected_digest.split(":", 1)
+        algo = algo.lower()
+    else:
+        algo = "sha256"
+        digest = expected_digest
+
+    # compute actual digest using requested algorithm
+    actual = checksum(file_path, algorithm=algo)
+    # normalize and compare
+    return actual.lower() == digest.lower()
+
+def checksum(file_path, algorithm="sha256"):
+    # support common algorithms
+    alg = algorithm.lower()
+    if alg not in hashlib.algorithms_available and alg not in {"md5","sha1","sha256","sha512"}:
+        # fallback to hashlib attribute if available, else raise
+        try:
+            hash_func = getattr(hashlib, alg)
+        except AttributeError:
+            raise ValueError(f"Unsupported hash algorithm: {algorithm}")
+    else:
+        # prefer direct constructor if present
+        try:
+            hash_func = getattr(hashlib, alg)
+        except AttributeError:
+            # fallback to new algorithm via hashlib.new
+            def hash_func():
+                return hashlib.new(alg)
+
+    # create hasher
+    hasher = hash_func() if callable(hash_func) else hashlib.new(alg)
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
-            sha256.update(chunk)
-    return sha256.hexdigest()
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 def download(url, file_path, verify_checksum_func):
     tmp_path = file_path.with_suffix(".zip.part")  # Temporary download file
@@ -71,6 +104,6 @@ def download(url, file_path, verify_checksum_func):
     # Verify checksum before renaming
     if verify_checksum_func and not verify_checksum_func(tmp_path):
         tmp_path.unlink()  # remove incomplete/invalid download
-        raise RuntimeError("Downloaded file checksum does not match! Try downloading again. If the problem persists, set skip_checksum=True at your own risk.")
+        raise RuntimeError("Downloaded file checksum does not match! Try downloading again. If the problem persists, set skip_verify=True at your own risk.")
 
     tmp_path.rename(file_path)  # rename only after successful download
