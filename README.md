@@ -71,6 +71,15 @@ x, data = dataset[0]  # if supervised_mode=True
 ## Usage (Unmanaged mode)
 To be written
 
+## Supported datasets
+
+| Type   | Supported | Supervised | Versions |
+|----------|----------|----------|----------|
+| 2D_SOLVED   | ✅   |  ✅  | v2, v2.0.1, v2.0.2, v2.5b   |
+| 2D_OPEN_DISCOVERY    | ❌   |  -  | -  |
+| 3D_SOLVED    | ✅   | ❌   | v2   |
+| 3D_OPEN_DISCOVERY    | ❌   | -   | -   |
+
 ### Applying patches
 To be written
 
