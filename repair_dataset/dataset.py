@@ -164,7 +164,7 @@ class RePAIRDataset:
     def __len__(self) -> int:
         return len(self.puzzle_folders_list)
     
-    def _get_metadata(self, key : Union[int, str]) -> Tuple[dict, str]:
+    def _get_metadata(self, key : Union[int, str]) -> dict:
         if isinstance(key, int):
             puzzle_folder = self.puzzle_folders_list[key]
         elif isinstance(key, str):
@@ -176,7 +176,9 @@ class RePAIRDataset:
         with open(json_path, 'r') as f:
             data = json.load(f)
 
-        return data, str(puzzle_folder)
+        data['path'] = str(puzzle_folder)
+
+        return data
 
     def __getitem__(self, key : Union[int, str]) -> Union[dict, tuple]:
 
@@ -187,14 +189,15 @@ class RePAIRDataset:
         if self.version_type.version.major() == 1:
             raise NotImplementedError("v1 datasets are not supported yet.")
 
-        data, puzzle_folder = self._get_metadata(key)
-        puzzle_name = Path(puzzle_folder).name
+        data = self._get_metadata(key)
+
+        puzzle_folder = Path(data['path'])
+
+        puzzle_name = puzzle_folder.name
 
         metadata_version = data.get('metadata_version', 2)
-            
-        # add path in any case
-        data['path'] = puzzle_folder
 
+        
         if metadata_version == '2':
             # FIXME: why should we do this? If one wants this they should use a patched dataset
             # this was done before patches were implemented
