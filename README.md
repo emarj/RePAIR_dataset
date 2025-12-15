@@ -1,57 +1,60 @@
 # RePAIR_dataset
 
 ## Install
-You can install the package from the repository using pip (or your preferred package manager). Example:
+You can install the package from the repository using `pip` or your preferred package manager (usgin `uv` is suggested). 
 
-- From a local checkout:
-    pip install .
-- From a remote repo (replace URL with the repository URL):
-    pip install git+https://github.com/youruser/yourrepo.git
+To install and import the package in your project run
+```bash
+# standard pip command
+pip install git+https://github.com/emarj/RePAIR_dataset.git
+# uv in project mode
+uv add git+https://github.com/emarj/RePAIR_dataset.git
+# uv in venv only mode
+uv pip install git+https://github.com/emarj/RePAIR_dataset.git 
+```
 
-We recommend using an isolated environment (venv/virtualenv).
+If you want to play with it, checkout the repo and run
+```bash
+uv sync
+```
+this will automatically create a `venv` for you. Otherwise
+```bash
+# create your venv
+pip install .
+```
 
-## Quick usage
+## Usage (Managed Mode)
 
-Example file (managed mode — the DataManager handles extraction/patching):
+Use it as
+```python
+from repair_dataset import RePAIRDataset
+
+dataset = RePAIRDataset('.dataset/RePAIR', supervised_mode=True)
+
+print(f"Number of samples: {len(dataset)}")
+
+x, data = dataset[0]  # if supervised_mode=True
+# if supervised_mode=False, dataset[0] returns the parsed metadata dict
+```
+downloads will be managed automatically.
+
+## Select a patched version
+
+Available versions:
+- v2: vanilla one
+- v2.0.1: vanilla one with fixed some mistakes
+- v2.0.2: 
+- v2.5b: beta version with corrected GT and metadata v3
+
 ```python
 from repair_dataset import RePAIRDataset
 
 dataset = RePAIRDataset('.dataset/RePAIR',
-                                                version='v2',
-                                                type_='2D_SOLVED',
-                                                split='test',
-                                                from_scratch=False,
-                                                supervised_mode=True)  # set True to return images
+                        version='v2.5b',
+                        supervised_mode=True)
 
 print(f"Number of samples: {len(dataset)}")
+
 x, data = dataset[0]  # if supervised_mode=True
 # if supervised_mode=False, dataset[0] returns the parsed metadata dict
 ```
-
-Manual/unmanaged usage (you already have the dataset on disk):
-```python
-from repair_dataset import RePAIRDataset
-
-dataset = RePAIRDataset('/path/to/RePAIR_root',
-                                                version='v2',
-                                                type_='2D_SOLVED',
-                                                managed_mode=False,
-                                                supervised_mode=False)  # metadata only
-data = dataset['puzzle_0001']  # access by folder name
-```
-
-## Modes
-
-- supervised_mode=True
-    - __getitem__ returns (x, data)
-    - x = {'name': <puzzle_name>, 'fragments': [{'idx', 'name', 'image': PIL.Image}, ...]}
-    - data = original JSON metadata (with 'path' and 'name' injected for v2)
-
-- supervised_mode=False (default)
-    - __getitem__ returns the parsed metadata dict only (no in-memory images)
-
-Other notes:
-- You can iterate over the dataset (for puzzle in dataset: ...).
-- Use split='train' or split='test' to filter puzzles by provided splits.
-- When managed_mode=False you must provide version and type_ explicitly.
-- For v2 variants, fragment filenames in JSON may be .obj on disk images are loaded as .png (handled automatically when supervised_mode=True).
