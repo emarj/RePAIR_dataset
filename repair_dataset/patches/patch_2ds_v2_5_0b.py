@@ -1,10 +1,13 @@
-from PIL import Image
 from pathlib import Path
-from repair_dataset.utils import centroid_rgba
-from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import argparse
 import shutil
+
+from PIL import Image
+from tqdm import tqdm
+
+from repair_dataset.utils import centroid_rgba
 
 def patch_2ds_v2_5_0b(dataset_path : str) -> None:
     convert_to_v2_5b(dataset_path, patch_mode=True)
@@ -34,25 +37,31 @@ def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=Fal
         # Load folders
         puzzle_folders = sorted([p for p in Path(dataset_path).iterdir() if p.is_dir() and p.name.startswith("puzzle_")])
         
-        data = {}
 
-        for puzzle_folder in tqdm(puzzle_folders, desc="Converting to v2.5b"):
+        def process_directory(puzzle_folder:Path):
             puzzle_name = puzzle_folder.name
 
             with open(puzzle_folder / 'data.json','r') as f:
                 sample = json.load(f)
 
+            preview_src = puzzle_folder / 'preview.png'
+            sol_size = Image.open(preview_src).size
+
 
             data = {
                 'name' : puzzle_name,
-                'dataset_version' : 'v2.5b',
+                'metadata_version' : '3',
                 'fragments' : [],
+                'solution_size' : sol_size,
                 'adjacency': sample['adjacency'],
             }
 
             new_puzzle_folder = output_path / puzzle_name
             if not in_place:
                 new_puzzle_folder.mkdir(parents=True, exist_ok=True)
+
+
+
             
             for frag in sample['fragments']:
                 image_path = puzzle_folder / frag['filename'].replace('.obj','.png')
@@ -87,7 +96,6 @@ def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=Fal
 
             if not in_place and not patch_mode:
                 # copy preview image
-                preview_src = puzzle_folder / 'preview.png'
                 preview_dst = new_puzzle_folder / 'preview.png'
                 shutil.copy(preview_src, preview_dst)
 
@@ -97,7 +105,15 @@ def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=Fal
             
             # no need for this because the filename is the same
             # if delete_old:
-            #     (puzzle_folder / 'data.json').unlink()  
+            #     (puzzle_folder / 'data.json').unlink()
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = [executor.submit(process_directory, d) for d in puzzle_folders]
+
+            for _ in tqdm(as_completed(futures), total=len(futures),desc="Converting to v2.5b"):
+                pass
+
+  
 
 
 if __name__ == "__main__":

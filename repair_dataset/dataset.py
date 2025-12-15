@@ -1,7 +1,8 @@
 from pathlib import Path
 import json
-
 from typing import Union
+
+from PIL import Image
 
 from .splits.splits import train_split, test_split
 
@@ -102,7 +103,7 @@ class RePAIRDataset:
 
         ################### Load dataset ###################
 
-        print(f'Loading RePAIRDataset {self.version_type}')
+        #print(f'Loading RePAIRDataset {self.version_type}')
 
         self.data_path = self.datamanager.data_path if managed_mode else self.root
         
@@ -124,15 +125,16 @@ class RePAIRDataset:
                 raise RuntimeError("No data found in the specified root folder.")
     
     def _make_split(self) -> None:
-        if self.split is None:
-            return
-        
-        if self.split == 'train':
-            split = train_split
-        elif self.split == 'test':
-            split = test_split
-        else:
-            raise RuntimeError(f"Unsupported split name: {self.split}. Supported splits are: 'train', 'test'")
+
+        split = None
+
+        if self.split is not None:
+            if self.split == 'train':
+                split = train_split
+            elif self.split == 'test':
+                split = test_split
+            else:
+                raise RuntimeError(f"Unsupported split name: {self.split}. Supported splits are: 'train', 'test'")
         
         self._filter(split)
 
@@ -171,42 +173,57 @@ class RePAIRDataset:
         else:
             raise TypeError(f"Invalid key type: {type(key)}")
         
+        # this should not happen, but just in case
+        if self.version_type.type_ != '2D_SOLVED' :
+            raise NotImplementedError(f"Dataset type {self.version_type.type_} not implemented yet.")
+
+        if self.version_type.version.major() == 1:
+            raise NotImplementedError("v1 datasets are not supported yet.")
+        
         json_path = puzzle_folder / "data.json"
 
         puzzle_name = puzzle_folder.name
 
         with open(json_path, 'r') as f:
             data = json.load(f)
-        
-        if self.version_type.version.major_str() == 'v2':
-            # add names
-            data['name'] = puzzle_name
-            for i,frag in enumerate(data['fragments']):
-                frag_name = Path(frag['filename']).stem
-                data['fragments'][i]['name'] = frag_name
+
+        metadata_version = data.get('metadata_version', 2)
             
         # add path in any case
         data['path'] = str(puzzle_folder)
 
+        if metadata_version == '2':
+            # FIXME: why should we do this? If one wants this they should use a patched dataset
+            # this was done before patches were implemented
+            # removing this would break evaluation script, but maybe the code should be moved there
+            data['name'] = puzzle_name
+            for i,frag in enumerate(data['fragments']):
+                frag_name = Path(frag['filename']).stem
+                data['fragments'][i]['name'] = frag_name
+
         if not self.supervised_mode:
             return data
         
+        ######## SUPERVISED MODE ########
+        
         # in this case self.supervised_mode is True
-        # we return images inside the dataset object
-        from PIL import Image
+        # we split input and target
+        # x contains in-memory images and few metadata
+        # data contains the original metadata dict with the GT
+
 
         fragments = []
         for frag in data['fragments']:
-            # in v2, filenames are .obj, we need to load .png
+            # if version less than v2.0.2, filenames are .obj, we need to load .png
+            # TODO: we should check the version properly
             image_path = puzzle_folder / frag['filename'].replace('.obj', '.png')
             image = Image.open(image_path).convert('RGBA')
 
-            frag_dict = {
+            fragments.append({
                 'idx': frag['idx'],
                 'name': frag.get('name', Path(frag['filename']).stem),
                 'image': image,
-            }
-            fragments.append(frag_dict)
+            })
         
         x = {
             'name': puzzle_name,
