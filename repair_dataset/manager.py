@@ -144,7 +144,10 @@ README = """DO NOT TOUCH the contents of this folder unless you know what you ar
 This folder is managed by a dataset data manager, which handles downloading, verifying, extracting files.
 If something do not work as expected, try to use `from_scratch=True` option or delete the `STATUS` file to force re-download and re-extraction.
 
-This behaviour can be disabled by using unmanaged mode in the dataset, but then you are responsible for having the correct data in place."""
+This behaviour can be disabled by using unmanaged mode in the dataset, but then you are responsible for having the correct data in place.
+
+If you want to free space, you cannot delete the zip files, they will be re-downloaded automatically if missing.
+You can delete the extracted data folders for versions you do not need anymore, the major version folder (v2) is always necessary."""
 
 def write_readme(folder_path):
     with open(folder_path / "README", "w") as f:
