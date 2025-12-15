@@ -103,7 +103,9 @@ def checksum(file_path, algorithm="sha256"):
     # create hasher
     hasher = hash_func() if callable(hash_func) else hashlib.new(alg)
     with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
+        for chunk in tqdm(iter(lambda: f.read(8192), b""),
+                          total=round(file_path.stat().st_size / 8192),
+                          desc="Verifying checksum"):
             hasher.update(chunk)
     return hasher.hexdigest()
 
