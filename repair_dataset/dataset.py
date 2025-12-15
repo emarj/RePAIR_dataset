@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from typing import Union
+from typing import Union, Tuple
 
 from PIL import Image
 
@@ -59,7 +59,7 @@ class RePAIRDataset:
         
         self.root = Path(root)
         
-        self.split = split
+        self._split = split
         self.supervised_mode = supervised_mode
 
         # iterator state
@@ -118,7 +118,7 @@ class RePAIRDataset:
 
         self._make_split()
 
-        if len(self) == 0:
+        if len(self.puzzle_folders_list) == 0:
             if managed_mode:
                 raise RuntimeError(f"No data found after extraction. The dataset may be corrupted. {err_msg}")
             else:
@@ -128,13 +128,13 @@ class RePAIRDataset:
 
         split = None
 
-        if self.split is not None:
-            if self.split == 'train':
+        if self._split is not None:
+            if self._split == 'train':
                 split = train_split
-            elif self.split == 'test':
+            elif self._split == 'test':
                 split = test_split
             else:
-                raise RuntimeError(f"Unsupported split name: {self.split}. Supported splits are: 'train', 'test'")
+                raise RuntimeError(f"Unsupported split name: {self._split}. Supported splits are: 'train', 'test'")
         
         self._filter(split)
 
@@ -163,34 +163,37 @@ class RePAIRDataset:
     
     def __len__(self) -> int:
         return len(self.puzzle_folders_list)
-
-    def __getitem__(self, key : Union[int, str]) -> Union[dict, tuple]:
-
+    
+    def _get_metadata(self, key : Union[int, str]) -> Tuple[dict, str]:
         if isinstance(key, int):
             puzzle_folder = self.puzzle_folders_list[key]
         elif isinstance(key, str):
             puzzle_folder = self.puzzle_folders_list[self.puzzle_folders_map[key]]
         else:
             raise TypeError(f"Invalid key type: {type(key)}")
-        
+
+        json_path = puzzle_folder / "data.json"
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+
+        return data, str(puzzle_folder)
+
+    def __getitem__(self, key : Union[int, str]) -> Union[dict, tuple]:
+
         # this should not happen, but just in case
         if self.version_type.type_ != '2D_SOLVED' :
             raise NotImplementedError(f"Dataset type {self.version_type.type_} not implemented yet.")
 
         if self.version_type.version.major() == 1:
             raise NotImplementedError("v1 datasets are not supported yet.")
-        
-        json_path = puzzle_folder / "data.json"
 
-        puzzle_name = puzzle_folder.name
-
-        with open(json_path, 'r') as f:
-            data = json.load(f)
+        data, puzzle_folder = self._get_metadata(key)
+        puzzle_name = Path(puzzle_folder).name
 
         metadata_version = data.get('metadata_version', 2)
             
         # add path in any case
-        data['path'] = str(puzzle_folder)
+        data['path'] = puzzle_folder
 
         if metadata_version == '2':
             # FIXME: why should we do this? If one wants this they should use a patched dataset
