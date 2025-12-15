@@ -48,10 +48,10 @@ downloads will be managed automatically.
 ### Select a patched version
 
 Available versions:
-- v2: vanilla one
-- v2.0.1: vanilla one with fixed some mistakes
-- v2.0.2: 
-- v2.5b: beta version with corrected GT and metadata v3
+- v2: vanilla v2, as downloaded from Zenodo
+- v2.0.1: fixing some major GT errors on 3 puzzles
+- v2.0.2: fixing filenames in metadata '.obj' -> '.png'
+- v2.5b: beta version with corrected GT and new metadata version
 
 ```python
 from repair_dataset import RePAIRDataset
