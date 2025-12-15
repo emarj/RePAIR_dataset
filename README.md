@@ -1,5 +1,7 @@
 # RePAIR_dataset
 
+Python implementation of [RePAIR Dataset](https://zenodo.org/records/15800029).
+
 ## Install
 You can install the package from the repository using `pip` or your preferred package manager (usgin `uv` is suggested). 
 
