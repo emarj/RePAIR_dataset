@@ -24,6 +24,9 @@ class DataManager(DownloaderVerifier):
 
         self.root = Path(root)
 
+        if not self.root.exists():
+            self.root.mkdir(parents=True, exist_ok=False)
+
         write_readme(self.root)
         
         self.extract_path = self.root / self.version_type.type_ / str(self.version_type.version)
