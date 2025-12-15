@@ -147,6 +147,16 @@ wheels = [
 ]
 
 [[package]]
+name = "datman"
+version = "0.1.0"
+source = { git = "https://github.com/emarj/datman?rev=v0.1.0#c94161783303da31e09c630b5a4f4c171d792870" }
+dependencies = [
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "tqdm" },
+]
+
+[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -710,6 +720,7 @@ name = "repair-dataset"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "datman" },
     { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
@@ -724,6 +735,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "datman", git = "https://github.com/emarj/datman?rev=v0.1.0" },
     { name = "numpy", specifier = ">=1.21.5" },
     { name = "pillow", specifier = ">=10.4.0" },
     { name = "requests", specifier = ">=2.32.4" },

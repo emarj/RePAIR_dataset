@@ -3,7 +3,7 @@ from typing import Union
 
 from .splits.splits import train_split, test_split
 
-from .datamanager import DataManager
+from datman import DataManager
 from .version_type import VersionType
 
 from .getters.solved2d_getter import getmetadata_2dsolved, getitem_2dsolved
