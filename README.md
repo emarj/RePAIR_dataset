@@ -3,6 +3,8 @@
 ## Install
 You can install the package from the repository using `pip` or your preferred package manager (usgin `uv` is suggested). 
 
+### User mode
+
 To install and import the package in your project run
 ```bash
 # standard pip command
@@ -13,7 +15,12 @@ uv add git+https://github.com/emarj/RePAIR_dataset.git
 uv pip install git+https://github.com/emarj/RePAIR_dataset.git 
 ```
 
-If you want to play with it, checkout the repo and run
+### Dev mode
+If you want to play with it, checkout the repo
+```bash
+git clone https://github.com/emarj/RePAIR_dataset.git
+```
+
 ```bash
 uv sync
 ```
