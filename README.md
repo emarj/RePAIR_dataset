@@ -45,7 +45,7 @@ x, data = dataset[0]  # if supervised_mode=True
 ```
 downloads will be managed automatically.
 
-## Select a patched version
+### Select a patched version
 
 Available versions:
 - v2: vanilla one
@@ -65,3 +65,12 @@ print(f"Number of samples: {len(dataset)}")
 x, data = dataset[0]  # if supervised_mode=True
 # if supervised_mode=False, dataset[0] returns the parsed metadata dict
 ```
+
+## Usage (Unmanaged mode)
+To be written
+
+### Applying patches
+To be written
+
+## Evaluate
+To be written
