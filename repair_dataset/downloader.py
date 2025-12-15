@@ -11,6 +11,7 @@ class DownloaderVerifier:
                  data_url,
                  filename,
                  extract_path,
+                 data_path=None,
                  checksum=None,
                  skip_verify=False):
 
@@ -19,6 +20,7 @@ class DownloaderVerifier:
         self.file_path = self.folder / filename
         self.checksum = checksum
         self.extract_path = Path(extract_path)
+        self.data_path = data_path
 
         self.skip_verify = skip_verify
 
@@ -48,11 +50,13 @@ class DownloaderVerifier:
             # we check this before deleting anything
             raise RuntimeError(f"Cannot extract, file {self.file_path} does not exist.")
 
-        if self.extract_path.exists():
-            # if we decided to extract, it means we want a fresh copy
-            shutil.rmtree(self.extract_path)
+        if self.data_path and self.data_path.exists():
+            # if we decided to extract, it means we want a fresh copy.
+            # to avoid issues, we delete any existing data folder
+            print(f"Removing existing data folder {self.data_path}...")
+            shutil.rmtree(self.data_path)
 
-        self.extract_path.mkdir(parents=True, exist_ok=False)
+        self.extract_path.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(self.file_path, "r") as zip_ref:
             file_list = zip_ref.namelist()

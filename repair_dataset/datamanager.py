@@ -2,7 +2,7 @@ import enum
 from pathlib import Path
 
 from .downloader import DownloaderVerifier
-from .version_type import VersionType
+from .kv_store import load_kv, save_kv
 
 class Status(enum.Enum):
     NONE = "NONE"
@@ -11,22 +11,29 @@ class Status(enum.Enum):
 
 class DataManager(DownloaderVerifier):
     def __init__(
-        self, root, version_type, remote, from_scratch=False, patch_map=None, skip_verify=False
+        self,
+        root,
+        version_type_str,
+        remote,
+        extract_subpath=None,
+        from_scratch=False,
+        patch_map=None,
+        skip_verify=False,
     ):
-        if isinstance(version_type, VersionType):
-            self.version_type = version_type
-        else:
-            self.version_type = VersionType.from_str(version_type)
+
+        self.version_type = version_type_str
 
         self.root = Path(root)
+        if extract_subpath is None:
+            extract_subpath = ""
+        extract_path = self.root / extract_subpath
 
         if not self.root.exists():
             self.root.mkdir(parents=True, exist_ok=False)
 
         write_readme(self.root)
-        
-        self.extract_path = self.root / self.version_type.type_ / str(self.version_type.version)
-        self.data_path = self.extract_path / remote["folder_name"]
+
+        self.data_path = extract_path / remote["folder_name"]
         self.status_file_path = self.root / "STATUS"
 
         self.dv = DownloaderVerifier(
@@ -34,7 +41,8 @@ class DataManager(DownloaderVerifier):
             data_url=remote["url"],
             filename=remote["filename"],
             checksum=remote["checksum"],
-            extract_path=self.extract_path,
+            extract_path=extract_path,
+            data_path=self.data_path,
             skip_verify=skip_verify,
         )
 
@@ -87,7 +95,12 @@ class DataManager(DownloaderVerifier):
         if not self.status_file_path.exists():
             return Status.NONE
 
-        statuses = load_kv(self.status_file_path)
+        try:
+            statuses = load_kv(self.status_file_path)
+        except Exception as _:
+            print("Corrupted status file. Deleting it.")
+            self.status_file_path.unlink(missing_ok=True)
+            return Status.NONE
         status_str = statuses.get(str(self.version_type), "NONE")
         try:
             return Status(status_str)
@@ -96,30 +109,15 @@ class DataManager(DownloaderVerifier):
             return Status.NONE
 
     def set_status(self, status: Status):
-        statuses = (
-            load_kv(self.status_file_path) if self.status_file_path.exists() else {}
-        )
+        statuses = {}
+        if self.status_file_path.exists():
+            try:
+                statuses = load_kv(self.status_file_path)
+            except Exception as _:
+                print("Corrupted status file. Creating a new one.")
+        
         statuses[str(self.version_type)] = status.value
         save_kv(self.status_file_path, statuses)
-
-##### Utility functions for key-value file handling
-
-def load_kv(file_path):
-    data = {}
-    with open(file_path, "r") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                key, value = line.split(":", 1)
-                data[key] = value
-
-    return data
-
-
-def save_kv(file_path, data):
-    with open(file_path, "w") as f:
-        for key, value in data.items():
-            f.write(f"{key}:{value}\n")
 
 ##### README to insert into root folder #####
 

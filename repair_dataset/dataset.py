@@ -3,7 +3,7 @@ from typing import Union
 
 from .splits.splits import train_split, test_split
 
-from .manager import DataManager
+from .datamanager import DataManager
 from .version_type import VersionType
 
 from .getters.solved2d_getter import getmetadata_2dsolved, getitem_2dsolved
@@ -94,8 +94,9 @@ class RePAIRDataset:
 
             self.datamanager = DataManager(
                 root=self.root,
-                version_type=self.version_type,
+                version_type_str=str(self.version_type),
                 remote=remote,
+                extract_subpath= f"{self.version_type.type_}/{self.version_type.version}",
                 from_scratch=from_scratch,
                 skip_verify=skip_verify,
                 patch_map=PATCH_MAP,
