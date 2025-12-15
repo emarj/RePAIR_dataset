@@ -2,12 +2,15 @@ import requests
 import hashlib
 from tqdm import tqdm
 from pathlib import Path
+import shutil
+import zipfile
 
 class DownloaderVerifier:
     def __init__(self,
                  folder,
                  data_url,
                  filename,
+                 extract_path,
                  checksum=None,
                  skip_verify=False):
 
@@ -15,17 +18,17 @@ class DownloaderVerifier:
         self.data_url = data_url
         self.file_path = self.folder / filename
         self.checksum = checksum
-        self.extract_path = self.folder
+        self.extract_path = Path(extract_path)
 
         self.skip_verify = skip_verify
 
-    def download(self):
+    def download_and_extract(self):
         self.folder.mkdir(parents=True, exist_ok=True)
 
         # Download zip if not present or checksum fails
         verified = self.verify(self.file_path) if self.file_path.exists() else False
         if not self.file_path.exists() or not verified:
-            if self.file_path.exists() and not verified:
+            if self.file_path.exists():
                 print("Existing file checksum does not match, re-downloading...")
 
             download(
@@ -33,9 +36,28 @@ class DownloaderVerifier:
                 file_path=self.file_path,
                 verify_checksum_func=self.verify
             )
+        
+        self.extract()
     
     def verify(self, file_path):
         return verify_checksum(file_path, self.checksum, self.skip_verify)
+    
+    def extract(self):
+
+        if not self.file_path.exists():
+            # we check this before deleting anything
+            raise RuntimeError(f"Cannot extract, file {self.file_path} does not exist.")
+
+        if self.extract_path.exists():
+            # if we decided to extract, it means we want a fresh copy
+            shutil.rmtree(self.extract_path)
+
+        self.extract_path.mkdir(parents=True, exist_ok=False)
+
+        with zipfile.ZipFile(self.file_path, "r") as zip_ref:
+            file_list = zip_ref.namelist()
+            for file in tqdm(file_list, desc="Extracting", disable=False):
+                zip_ref.extract(file, self.extract_path)
     
 ################# Helper functions #################
 

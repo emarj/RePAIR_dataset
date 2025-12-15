@@ -1,9 +1,5 @@
 import enum
 from pathlib import Path
-import shutil
-import zipfile
-
-from tqdm import tqdm
 
 from .downloader import DownloaderVerifier
 from .version_type import VersionType
@@ -38,6 +34,7 @@ class DataManager(DownloaderVerifier):
             data_url=remote["url"],
             filename=remote["filename"],
             checksum=remote["checksum"],
+            extract_path=self.extract_path,
             skip_verify=skip_verify,
         )
 
@@ -53,35 +50,18 @@ class DataManager(DownloaderVerifier):
     
 
     def _download_and_extract(self):
-        # downloader manages its own state
-        self.dv.download()
-
         status = self.get_status()
         if status == Status.OK:
             return
+        
+        self.dv.download_and_extract()
 
-        self._extract()
         self._apply_patches()
 
         self.set_status(Status.OK)
 
         print(f"Dataset version {self.version_type} is ready")
 
-    def _extract(self):
-
-        if not self.dv.file_path.exists():
-            raise RuntimeError(f"Cannot extract, file {self.dv.file_path} does not exist.")
-
-        if self.extract_path.exists():
-            # if we decided to extract, it means we want a fresh copy
-            shutil.rmtree(self.extract_path)
-
-        self.extract_path.mkdir(parents=True, exist_ok=False)
-
-        with zipfile.ZipFile(self.dv.file_path, "r") as zip_ref:
-            file_list = zip_ref.namelist()
-            for file in tqdm(file_list, desc="Extracting", disable=False):
-                zip_ref.extract(file, self.extract_path)
 
     def _apply_patches(self) -> None:
         # patches_map = {
@@ -143,13 +123,14 @@ def save_kv(file_path, data):
 
 ##### README to insert into root folder #####
 
-README = """DO NOT TOUCH the contents of this folder unless you know what you are doing. In particular, do not delete the zip archives.
+README = """TLDR: DO NOT TOUCH the contents of this folder unless you know what you are doing.
+
 This folder is managed by a dataset data manager, which handles downloading, verifying, extracting files.
 If something do not work as expected, try to use `from_scratch=True` option or delete the `STATUS` file to force re-download and re-extraction.
 
-This behaviour can be disabled by using unmanaged mode in the dataset, but then you are responsible for having the correct data in place.
+This behaviour can be disabled by setting unmanaged mode in the dataset, but then you are responsible for having the correct data in place.
 
-If you want to free space, you cannot delete the zip files, they will be re-downloaded automatically if missing.
+If you want to free space, you can delete the zip files after a *successful* extraction, they will be re-downloaded automatically if missing.
 You can delete the extracted data folders for versions you do not need anymore, the major version folder (v2) is always necessary."""
 
 def write_readme(folder_path):
