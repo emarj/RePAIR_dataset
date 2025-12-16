@@ -10,10 +10,7 @@ from .getters.solved2d_getter import getmetadata_2dsolved, getitem_2dsolved
 from .getters.solved3d_getter import getitem_3dsolved
 
 from .info import (
-    DEFAULT_VERSION,
-    DEFAULT_TYPE,
-    SUPPORTED_VERSIONS_TYPES,
-    PATCH_MAP,
+    VERSIONS_TYPES,
     REMOTES,
 )
 
@@ -28,7 +25,7 @@ class RePAIRDataset:
 
     Parameters
     - root (str or Path): path to the dataset root folder. In manaeged mode, this is where data will be downloaded/extracted.
-    - version (str): dataset version. Supported versions are: 'v2', 'v2.0.1', 'v2.0.2', 'v2.5b'.
+    - version (str): dataset version. Supported versions are: 'v2', 'v2.0.1', 'v2.0.2', 'v3b'.
     - split (None|'train'|'test'): optional dataset split.
     - supervised_mode (bool): if False (default) __getitem__ returns parsed metadata dict.
                               if True, __getitem__ returns a tuple (x, data) where `x` contains
@@ -64,33 +61,28 @@ class RePAIRDataset:
 
         # iterator state
         self._iter_idx = 0
+
+        if type_ is None:
+            raise RuntimeError("Dataset type must be specified.")
+        else:
+            if type_ not in VERSIONS_TYPES:
+                raise RuntimeError(f"Unsupported dataset type: {type_}. Supported types are: {list(VERSIONS_TYPES.keys())}")
         
+        if managed_mode and version is None:
+                # if we manage the data, we set the default version type
+                version = VERSIONS_TYPES[type_]['default_version']
         
         if version is None:
-            if managed_mode:
-                # if we manage the data, we set the default version type
-                version = DEFAULT_VERSION
-            else:
-                raise RuntimeError("When managed_mode is False, version must be specified.")
-        
-        if type_ is None:
-            if managed_mode:
-                # if we manage the data, we set the default version type
-                type_ = DEFAULT_TYPE
-            else:
-                raise RuntimeError("When managed_mode is False, type_ must be specified.")
+            raise RuntimeError("When managed_mode is False, version must be specified.")
 
         self.version_type = VersionType(version, type_)
-
-        if not self.version_type.supported(SUPPORTED_VERSIONS_TYPES):
-            raise RuntimeError(f"Unsupported dataset version_type {self.version_type}. Supported versions are:\n {SUPPORTED_VERSIONS_TYPES}")
         
         if managed_mode:
-            mvt = self.version_type.major_version_type()
-            remote = REMOTES.get(mvt, None)
-
+            breakpoint()
+            base = VERSIONS_TYPES[self.version_type.type_]['versions'][str(self.version_type.version)].get('base', self.version_type.version)
+            remote = REMOTES.get(f"{self.version_type.type_}_{base}", None)
             if remote is None:
-                raise RuntimeError(f"Remote missing for major version_type {mvt}.")
+                raise RuntimeError(f"Remote missing for base dataset type {self.version_type.type_} and version {base}.")
 
             self.datamanager = DataManager(
                 root=self.root,
@@ -99,7 +91,6 @@ class RePAIRDataset:
                 extract_subpath= f"{self.version_type.type_}/{self.version_type.version}",
                 from_scratch=from_scratch,
                 skip_verify=skip_verify,
-                patch_map=PATCH_MAP,
             )
 
         ################### Load dataset ###################
@@ -108,7 +99,7 @@ class RePAIRDataset:
 
         self.data_path = self.datamanager.data_path if managed_mode else self.root
         
-        err_msg = "Check the specified root folder is correct. If the error persist, try to recreate the dataset running with from_scratch=True or by deleting the root folder."
+        err_msg = "Check the specified root folder is correct. If the error persist, try to recreate the dataset running with from_scratch=True or delete the STATUS file inside the folder."
         if not self.data_path.exists():
             if managed_mode:
                 raise RuntimeError(f"Cannot find data folder. {err_msg}")

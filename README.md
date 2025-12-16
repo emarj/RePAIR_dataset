@@ -53,13 +53,13 @@ Available versions:
 - v2: vanilla v2, as downloaded from Zenodo
 - v2.0.1: fixing some major GT errors on 3 puzzles
 - v2.0.2: fixing filenames in metadata '.obj' -> '.png'
-- v2.5b: beta version with corrected GT and new metadata version
+- v3b: beta version with corrected GT and new metadata version
 
 ```python
 from repair_dataset import RePAIRDataset
 
 dataset = RePAIRDataset('.dataset/RePAIR',
-                        version='v2.5b',
+                        version='v3b',
                         supervised_mode=True)
 
 print(f"Number of samples: {len(dataset)}")
@@ -75,7 +75,7 @@ To be written
 
 | Type   | Supported | Supervised | Versions |
 |----------|----------|----------|----------|
-| 2D_SOLVED   | ✅   |  ✅  | v2, v2.0.1, v2.0.2, v2.5b   |
+| 2D_SOLVED   | ✅   |  ✅  | v2, v2.0.1, v2.0.2, v3b   |
 | 2D_OPEN_DISCOVERY    | ❌   |  -  | -  |
 | 3D_SOLVED    | ✅   | ❌   | v2   |
 | 3D_OPEN_DISCOVERY    | ❌   | -   | -   |

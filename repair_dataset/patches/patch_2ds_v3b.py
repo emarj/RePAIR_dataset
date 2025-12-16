@@ -9,10 +9,10 @@ from tqdm import tqdm
 
 from repair_dataset.utils import centroid_rgba
 
-def patch_2ds_v2_5_0b(dataset_path : str) -> None:
-    convert_to_v2_5b(dataset_path, patch_mode=True)
+def patch_2ds_v3b(dataset_path : str) -> None:
+    convert_to_v3b(dataset_path, patch_mode=True)
 
-def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=False):
+def convert_to_v3b(dataset_path,output_path=None,in_place=False,patch_mode=False):
 
         if not patch_mode:
             if in_place and output_path is not None:
@@ -89,7 +89,7 @@ def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=Fal
             if not in_place: 
                 output_json_path = new_puzzle_folder / 'data.json'
             else:
-                output_json_path = new_puzzle_folder / 'data_v2_5b.json'
+                output_json_path = new_puzzle_folder / 'data_v3b.json'
             
             with open(output_json_path, 'w') as f:
                 json.dump(data, f, indent=4)
@@ -110,7 +110,7 @@ def convert_to_v2_5b(dataset_path,output_path=None,in_place=False,patch_mode=Fal
         with ThreadPoolExecutor(max_workers=8) as executor:
             futures = [executor.submit(process_directory, d) for d in puzzle_folders]
 
-            for _ in tqdm(as_completed(futures), total=len(futures),desc="Converting to v2.5b"):
+            for _ in tqdm(as_completed(futures), total=len(futures),desc="Converting to v3b"):
                 pass
 
   
@@ -124,4 +124,4 @@ if __name__ == "__main__":
     argparser.add_argument('--in-place', action='store_true',default=False, help="Overwrite data in place")
     args = argparser.parse_args()
 
-    convert_to_v2_5b(args.dataset_path, args.output_path, args.in_place)
+    convert_to_v3b(args.dataset_path, args.output_path, args.in_place)

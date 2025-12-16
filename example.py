@@ -3,7 +3,7 @@ from repair_dataset import RePAIRDataset
 def main():
 
     dataset = RePAIRDataset('.dataset/RePAIR',
-                               version='v2',
+                               version='v3b',
                                type_='2D_SOLVED',
                                supervised_mode=True)
 
