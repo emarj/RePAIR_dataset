@@ -76,21 +76,24 @@ class RePAIRDataset:
             raise RuntimeError("When managed_mode is False, version must be specified.")
 
         self.version_type = VersionType(version, type_)
-        
+
+        version_dict = VERSIONS_TYPES[self.version_type.type_]['versions'][str(self.version_type.version)]
+
         if managed_mode:
-            breakpoint()
-            base = VERSIONS_TYPES[self.version_type.type_]['versions'][str(self.version_type.version)].get('base', self.version_type.version)
+            
+            base = version_dict.get('base', self.version_type.version)
             remote = REMOTES.get(f"{self.version_type.type_}_{base}", None)
             if remote is None:
                 raise RuntimeError(f"Remote missing for base dataset type {self.version_type.type_} and version {base}.")
 
             self.datamanager = DataManager(
                 root=self.root,
-                version_type_str=str(self.version_type),
+                dataset_id=str(self.version_type),
                 remote=remote,
                 extract_subpath= f"{self.version_type.type_}/{self.version_type.version}",
                 from_scratch=from_scratch,
                 skip_verify=skip_verify,
+                patches=version_dict.get('patches',[])
             )
 
         ################### Load dataset ###################
@@ -161,8 +164,6 @@ class RePAIRDataset:
         if self.version_type.type_ != '2D_SOLVED':
             raise NotImplementedError(f"Metadata getter not implemented for dataset type {self.version_type.type_}.")
         return getmetadata_2dsolved(puzzle_folder)
-
-       
 
     def _get_puzzle_folder(self, key):
         if isinstance(key, int):

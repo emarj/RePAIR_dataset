@@ -13,6 +13,6 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-datman = { git = "https://github.com/emarj/datman", rev = "v0.1.0" }
+datman = { path = "../DatasetManager", editable = true }
 
 
