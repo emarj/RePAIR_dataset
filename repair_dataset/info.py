@@ -1,30 +1,38 @@
-from .patches.patch_2ds_v3b import patch_2ds_v3b
+from repair_dataset.patches import patch_2ds_v3_b2
+from .patches.patch_2ds_v3_b1 import patch_2ds_v3_b1
 from .patches.patch_2ds_v2_0_1 import patch_2ds_v2_0_1
 from .patches.patch_2ds_v2_0_2 import patch_2ds_v2_0_2
 
+from .variant_version import Version
+
 from datman.remote import Remote
 
-VERSIONS_TYPES = {
+VARIANTS = {
     '2D_SOLVED': {
-        'default_version': 'v2.0.2',
-        'versions': {'v2': {},
-                  'v2.0.1': {
-                        'base': 'v2',
+        'default_version': Version.parse('3'),
+        'versions': {
+                  Version.parse('2'): {},
+                  Version.parse('2.0.1'): {
+                        'base': Version.parse('2'),
                         'patches': [patch_2ds_v2_0_1],
                   },
-                  'v2.0.2': {
-                        'base': 'v2',
+                  Version.parse('2.0.2'): {
+                        'base': Version.parse('2'),
                         'patches': [patch_2ds_v2_0_1, patch_2ds_v2_0_2],
                   },
-                  'v3b': {
-                        'base': 'v2',
-                        'patches': [patch_2ds_v3b],
+                  Version.parse('3-beta.1'): {
+                        'base': Version.parse('2'),
+                        'patches': [patch_2ds_v3_b1],
+                  },
+                  Version.parse('3-beta.2'): {
+                        'base': Version.parse('2'),
+                        'patches': [patch_2ds_v3_b1,patch_2ds_v3_b2],
                   },
                   },
     },
     '3D_SOLVED': {
-        'default_version': 'v2',
-        'versions': {'v2': {}}},
+        'default_version': Version.parse('2'),
+        'versions': {Version.parse('2'): {}}},
     }
 
 

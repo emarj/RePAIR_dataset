@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=1.21.5",
     "pillow>=10.4.0",
     "requests>=2.32.4",
+    "semver>=3.0.4",
     "tqdm>=4.66.5",
 ]
 

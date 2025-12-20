@@ -1,52 +1,28 @@
 from pathlib import Path
 from typing import Union
+import warnings
 
 from .splits.splits import train_split, test_split
 
 from datman import DataManager
-from .version_type import VersionType
+from .variant_version import VariantVersion, Version
 
 from .getters.solved2d_getter import getmetadata_2dsolved, getitem_2dsolved
 from .getters.solved3d_getter import getitem_3dsolved
 
 from .info import (
-    VERSIONS_TYPES,
+    VARIANTS,
     REMOTES,
 )
 
 
 class RePAIRDataset:
-    """Dataset access class for RePAIR puzzles.
-
-    Usage
-    - Instantiate with the dataset root (or let DataManager manage extraction by setting managed_mode=True).
-    - Index by integer or puzzle name (string) to obtain the puzzle metadata (and images if managed_mode=True).
-    - Use as an iterator to walk puzzles in the active split.
-
-    Parameters
-    - root (str or Path): path to the dataset root folder. In manaeged mode, this is where data will be downloaded/extracted.
-    - version (str): dataset version. Supported versions are: 'v2', 'v2.0.1', 'v2.0.2', 'v3b'.
-    - split (None|'train'|'test'): optional dataset split.
-    - supervised_mode (bool): if False (default) __getitem__ returns parsed metadata dict.
-                              if True, __getitem__ returns a tuple (x, data) where `x` contains
-                              in-memory PIL Images for fragments and `data` is the original metadata dict.
-                              - x: {'name': <puzzle_name>, 'fragments': [{'idx': int, 'name': str, 'image': PIL.Image}, ...]}
-                              - data: original parsed JSON as a dict (with 'path' and 'name' injected for v2 variants).
-    - managed_mode (bool): if True the DataManager will be used to ensure data is present and patched.
-    - from_scratch (bool): passed to DataManager to force a fresh extraction.
-    - skip_verify (bool): passed to DataManager to skip integrity checks.
-
-    Behavior & Notes
-    - The loader expects each puzzle to reside in a folder named 'puzzle_<id>' with a data.json file.
-    - For v2 series, fragment filenames in the JSON may be .obj while on-disk images are .png; supervised_mode handles this `.obj`->`.png` mapping.
-    - When managed_mode=True the constructor may raise on missing or corrupted data; when unmanaged and no data found a RuntimeError is raised.
-    - Supports iteration protocol (__iter__/__next__), __len__, and __getitem__ with int or str keys.
-    """
 
     def __init__(self,
                  root,
                  version=None,
-                 type_=None,
+                 variant=None,
+                 apply_random_rotations=False,
                  managed_mode=True,
                  split=None,
                  supervised_mode=False,
@@ -58,39 +34,56 @@ class RePAIRDataset:
         
         self._split = split
         self.supervised_mode = supervised_mode
+        self.apply_random_rotations = apply_random_rotations
 
         # iterator state
         self._iter_idx = 0
 
-        if type_ is None:
+        if variant is None or variant == '':
             raise RuntimeError("Dataset type must be specified.")
+        
+        if variant not in VARIANTS:
+            raise RuntimeError(f"Unsupported dataset type: {variant}. Supported types are: {list(VARIANTS.keys())}")
+        
+        if apply_random_rotations and variant != '2D_SOLVED':
+            raise RuntimeError("Random rotations can only be applied to '2D_SOLVED' dataset type.")
+        
+        if apply_random_rotations:
+            warnings.warn("Applying random rotations is somewhat broken at the moment. Use at your own risk.", UserWarning)
+ 
+        if not version:
+            if managed_mode:
+                ver = VARIANTS[variant]['default_version']
+            else:
+                raise RuntimeError("When managed_mode is False, version must be specified.")
         else:
-            if type_ not in VERSIONS_TYPES:
-                raise RuntimeError(f"Unsupported dataset type: {type_}. Supported types are: {list(VERSIONS_TYPES.keys())}")
-        
-        if managed_mode and version is None:
-                # if we manage the data, we set the default version type
-                version = VERSIONS_TYPES[type_]['default_version']
-        
-        if version is None:
-            raise RuntimeError("When managed_mode is False, version must be specified.")
+            ver = Version.parse(version)
 
-        self.version_type = VersionType(version, type_)
+        supported_versions = VARIANTS[variant]['versions']
+        filtered_versions = [v for v in supported_versions if ver.matches(v)]
+        if len(filtered_versions) == 0:
+            raise RuntimeError(f"Unsupported version {ver} for dataset type {variant}. Supported versions are: {[str(v) for v in list(supported_versions.keys())]}")
+        
+        matched_version = max(filtered_versions)
 
-        version_dict = VERSIONS_TYPES[self.version_type.type_]['versions'][str(self.version_type.version)]
+        self.variant_version = VariantVersion(matched_version, variant)
+
+        print(f"Using RePAIRDataset {self.variant_version}")
+
+        version_dict = supported_versions[matched_version]
 
         if managed_mode:
             
-            base = version_dict.get('base', self.version_type.version)
-            remote = REMOTES.get(f"{self.version_type.type_}_{base}", None)
+            base = version_dict.get('base', self.variant_version.version)
+            remote = REMOTES.get(f"{self.variant_version.variant}_v{base}", None)
             if remote is None:
-                raise RuntimeError(f"Remote missing for base dataset type {self.version_type.type_} and version {base}.")
+                raise RuntimeError(f"Remote missing for base dataset variant {self.variant_version.variant} and version {base}.")
 
             self.datamanager = DataManager(
                 root=self.root,
-                dataset_id=str(self.version_type),
+                dataset_id=str(self.variant_version),
                 remote=remote,
-                extract_subpath= f"{self.version_type.type_}/{self.version_type.version}",
+                extract_subpath= f"{self.variant_version.variant}/v{self.variant_version.version}",
                 from_scratch=from_scratch,
                 skip_verify=skip_verify,
                 patches=version_dict.get('patches',[])
@@ -161,8 +154,8 @@ class RePAIRDataset:
     
     def _get_metadata(self, key : Union[int, str]) -> dict:
         puzzle_folder = self._get_puzzle_folder(key)
-        if self.version_type.type_ != '2D_SOLVED':
-            raise NotImplementedError(f"Metadata getter not implemented for dataset type {self.version_type.type_}.")
+        if self.variant_version.variant != '2D_SOLVED':
+            raise NotImplementedError(f"Metadata getter not implemented for dataset type {self.variant_version.variant}.")
         return getmetadata_2dsolved(puzzle_folder)
 
     def _get_puzzle_folder(self, key):
@@ -177,12 +170,12 @@ class RePAIRDataset:
     def __getitem__(self, key : Union[int, str]) -> Union[dict, tuple]:
         puzzle_folder = self._get_puzzle_folder(key)
         # this should not happen, but just in case
-        if self.version_type.type_ == '2D_SOLVED' :
-            return getitem_2dsolved(puzzle_folder, self.supervised_mode)
-        elif self.version_type.type_ == '3D_SOLVED':
+        if self.variant_version.variant == '2D_SOLVED' :
+            return getitem_2dsolved(puzzle_folder, self.supervised_mode, self.apply_random_rotations)
+        elif self.variant_version.variant == '3D_SOLVED':
             return getitem_3dsolved(puzzle_folder, self.supervised_mode)
         else:
-            raise NotImplementedError(f"Dataset type {self.version_type.type_} not implemented yet.")
+            raise NotImplementedError(f"Dataset type {self.variant_version.variant} not implemented yet.")
 
 
 

@@ -50,9 +50,9 @@ downloads will be managed automatically.
 ### Select a patched version
 
 Available versions:
-- v2: vanilla v2, as downloaded from Zenodo
-- v2.0.1: fixing some major GT errors on 3 puzzles
-- v2.0.2: fixing filenames in metadata '.obj' -> '.png'
+- v2: vanilla v2, as downloaded from Zenodo **WRONG GT**
+- v2.0.1: fixing some major GT errors on 3 puzzles  **WRONG GT**
+- v2.0.2: fixing filenames in metadata '.obj' -> '.png'  **WRONG GT**
 - v3b: beta version with corrected GT and new metadata version
 
 ```python

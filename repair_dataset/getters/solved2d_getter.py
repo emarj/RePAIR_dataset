@@ -1,8 +1,12 @@
 from typing import Union
 from pathlib import Path
+import random
 import json
+import warnings
 
 from PIL import Image
+
+from ..utils import align_and_pad_rgba, centroid_rgba, concat_pil_img
 
 
 def getmetadata_2dsolved(puzzle_folder: Union[str, Path]) -> dict:
@@ -15,16 +19,19 @@ def getmetadata_2dsolved(puzzle_folder: Union[str, Path]) -> dict:
 
     return data
 
-def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool) -> Union[dict, tuple]:
+def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, apply_random_rotations: bool = False) -> Union[dict, tuple]:
+
+    if apply_random_rotations and not supervised_mode:
+        raise RuntimeError("Random rotations can only be applied in supervised mode.")
 
     data = getmetadata_2dsolved(puzzle_folder)
 
     puzzle_folder = Path(puzzle_folder)
     puzzle_name = puzzle_folder.name
 
+
     metadata_version = data.get('metadata_version', 2)
 
-    
     if metadata_version == '2':
         # FIXME: why should we do this? If one wants this they should use a patched dataset
         # this was done before patches were implemented
@@ -44,13 +51,37 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool) ->
     # x contains in-memory images and few metadata
     # data contains the original metadata dict with the GT
 
+    if apply_random_rotations:
+        angle = round(random.uniform(0, 359),2)
+        for frag in data['fragments']:
+            if 'position_2d' not in frag:
+                raise RuntimeError(f"Fragment {frag} does not have 'position_2d' key required for random rotation.")
+            x,y,original_angle = frag['position_2d']
+            
+            frag['position_2d'] = (x,y, original_angle + angle)
+
+
 
     fragments = []
-    for frag in data['fragments']:
+    for i, frag in enumerate(data['fragments']):
         # if version less than v2.0.2, filenames are .obj, we need to load .png
         # TODO: we should check the version properly
         image_path = puzzle_folder / frag['filename'].replace('.obj', '.png')
         image = Image.open(image_path).convert('RGBA')
+        #image = align_and_pad_rgba(image)
+
+        if apply_random_rotations:
+            angle = round(random.uniform(0, 359),2)
+            angle_orig = frag['position_2d'][2]
+            new_angle = (angle_orig + angle) % 360.0
+
+
+            if angle_orig != 0.0:
+                warnings.warn(f"Fragment {frag} already has a non-zero angle {angle_orig}. Adding random rotation of {angle} on top of it. Resulting angle: {new_angle}")
+            
+            data['fragments'][i]['position_2d'] = (x,y, new_angle)
+            image = image.rotate(-angle)
+
 
         fragments.append({
             'idx': frag['idx'],
