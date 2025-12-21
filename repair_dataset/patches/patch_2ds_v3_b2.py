@@ -9,7 +9,7 @@ import warnings
 from PIL import Image
 from tqdm import tqdm
 
-from repair_dataset.utils import align_and_pad_rgba, centroid_rgba
+from repair_dataset.utils import center_and_pad_rgba, centroid_rgba
 
 def patch_2ds_v3_b2(dataset_path : str) -> None:
     convert_to_v3_b2(dataset_path, patch_mode=True)
@@ -73,7 +73,7 @@ def convert_to_v3_b2(dataset_path : Union[str, Path], output_path : Union[str, P
                     new_image_path = new_puzzle_folder / image_path.name
 
                 #img_pil.show()
-                img_pil = align_and_pad_rgba(img_pil)
+                img_pil = center_and_pad_rgba(img_pil)
                 #img_pil.show()
                 img_pil = img_pil.rotate(-new_angle)
                 #img_pil.show()

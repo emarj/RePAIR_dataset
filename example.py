@@ -10,7 +10,7 @@ def main():
                                version='3-beta.2',
                                variant='2D_SOLVED',
                                supervised_mode=True,
-                               #apply_random_rotations=True,
+                               apply_random_rotations=True,
                                )
 
     print(f"Number of samples in dataset: {len(dataset)}")

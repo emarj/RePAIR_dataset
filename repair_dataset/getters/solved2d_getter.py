@@ -6,7 +6,7 @@ import warnings
 
 from PIL import Image
 
-from ..utils import align_and_pad_rgba, centroid_rgba, concat_pil_img
+from ..utils import center_and_pad_rgba, centroid_rgba, concat_pil_img
 
 
 def getmetadata_2dsolved(puzzle_folder: Union[str, Path]) -> dict:
@@ -51,15 +51,6 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
     # x contains in-memory images and few metadata
     # data contains the original metadata dict with the GT
 
-    if apply_random_rotations:
-        angle = round(random.uniform(0, 359),2)
-        for frag in data['fragments']:
-            if 'position_2d' not in frag:
-                raise RuntimeError(f"Fragment {frag} does not have 'position_2d' key required for random rotation.")
-            x,y,original_angle = frag['position_2d']
-            
-            frag['position_2d'] = (x,y, original_angle + angle)
-
 
 
     fragments = []
@@ -67,8 +58,12 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
         # if version less than v2.0.2, filenames are .obj, we need to load .png
         # TODO: we should check the version properly
         image_path = puzzle_folder / frag['filename'].replace('.obj', '.png')
+
         image = Image.open(image_path).convert('RGBA')
-        #image = align_and_pad_rgba(image)
+        image.show()
+        image = center_and_pad_rgba(image)
+        image.show()
+        breakpoint()
 
         if apply_random_rotations:
             angle = round(random.uniform(0, 359),2)
@@ -79,7 +74,7 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
             if angle_orig != 0.0:
                 warnings.warn(f"Fragment {frag} already has a non-zero angle {angle_orig}. Adding random rotation of {angle} on top of it. Resulting angle: {new_angle}")
             
-            data['fragments'][i]['position_2d'] = (x,y, new_angle)
+            data['fragments'][i]['position_2d'][2] = new_angle
             image = image.rotate(-angle)
 
 

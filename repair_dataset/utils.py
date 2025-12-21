@@ -100,7 +100,7 @@ def create_image_grid(data, grid_size=None, padding=10, font_size=20):
     
     return grid_image
 
-def align_and_pad_rgba(img: Image.Image) -> Image.Image:
+def center_and_pad_rgba(img: Image.Image) -> Image.Image:
     # --- 1. Tight bbox using PIL ---
     alpha = img.split()[-1]
     bbox = alpha.getbbox()
@@ -118,15 +118,15 @@ def align_and_pad_rgba(img: Image.Image) -> Image.Image:
     cx = np.average(xs, weights=weights)
     cy = np.average(ys, weights=weights)
 
-    # --- 4. MAX DISTANCE (this is the key part you asked about) ---
+    # --- 4. MAX DISTANCE ---
     dx = xs - cx
     dy = ys - cy
     r = np.sqrt(dx*dx + dy*dy).max()
 
     # --- 5. Canvas size from that radius ---
-    size = int(np.ceil(2 * r + 1))
+    size = 2 * int(np.ceil(r)) + 1  # make it odd
 
-    # --- 6. Integer placement (no transform) ---
+    # --- 6. Integer placement ---
     C = (size - 1) / 2
     tx = int(np.floor(C - cx))
     ty = int(np.floor(C - cy))
