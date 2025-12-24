@@ -7,7 +7,7 @@ from repair_dataset.utils import create_image_grid
 def main():
 
     dataset = RePAIRDataset('.dataset/RePAIR',
-                               version='3-beta.2',
+                               version='3',
                                variant='2D_SOLVED',
                                supervised_mode=True,
                                apply_random_rotations=True,

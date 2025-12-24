@@ -1,4 +1,4 @@
-from repair_dataset.patches import patch_2ds_v3_b2
+from repair_dataset.patches import patch_2ds_v3_b1_randrot
 from .patches.patch_2ds_v3_b1 import patch_2ds_v3_b1
 from .patches.patch_2ds_v2_0_1 import patch_2ds_v2_0_1
 from .patches.patch_2ds_v2_0_2 import patch_2ds_v2_0_2
@@ -6,6 +6,13 @@ from .patches.patch_2ds_v2_0_2 import patch_2ds_v2_0_2
 from .variant_version import Version
 
 from datman.remote import Remote
+
+def assert_supervised_mode(variant: str, version : Version) -> None:
+    if variant != '2D_SOLVED':
+        raise RuntimeError("Supervised mode is only supported for '2D_SOLVED' dataset variant.")
+    
+    if version.major < 3:
+        raise RuntimeError(f"Supervised mode is only supported for version 3, but got version {version}.")
 
 VARIANTS = {
     '2D_SOLVED': {
@@ -24,9 +31,9 @@ VARIANTS = {
                         'base': Version.parse('2'),
                         'patches': [patch_2ds_v3_b1],
                   },
-                  Version.parse('3-beta.2'): {
+                  Version.parse('3-beta.1.randrot'): {
                         'base': Version.parse('2'),
-                        'patches': [patch_2ds_v3_b1,patch_2ds_v3_b2],
+                        'patches': [patch_2ds_v3_b1,patch_2ds_v3_b1_randrot],
                   },
                   },
     },

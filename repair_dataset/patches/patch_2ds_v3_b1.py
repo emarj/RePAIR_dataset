@@ -51,7 +51,7 @@ def convert_to_v3_b1(dataset_path : Union[str, Path], output_path : Union[str, P
 
             data = {
                 'name' : puzzle_name,
-                'metadata_version' : '3',
+                'metadata_version' : 3,
                 'fragments' : [],
                 'solution_size' : sol_size,
                 'adjacency': sample['adjacency'],

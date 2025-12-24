@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Union
-import warnings
 
 from .splits.splits import train_split, test_split
 
@@ -13,6 +12,7 @@ from .getters.solved3d_getter import getitem_3dsolved
 from .info import (
     VARIANTS,
     REMOTES,
+    assert_supervised_mode,
 )
 
 
@@ -44,12 +44,6 @@ class RePAIRDataset:
         
         if variant not in VARIANTS:
             raise RuntimeError(f"Unsupported dataset type: {variant}. Supported types are: {list(VARIANTS.keys())}")
-        
-        if apply_random_rotations and variant != '2D_SOLVED':
-            raise RuntimeError("Random rotations can only be applied to '2D_SOLVED' dataset type.")
-        
-        if apply_random_rotations:
-            warnings.warn("Applying random rotations is somewhat broken at the moment. Use at your own risk.", UserWarning)
  
         if not version:
             if managed_mode:
@@ -63,14 +57,30 @@ class RePAIRDataset:
         filtered_versions = [v for v in supported_versions if ver.matches(v)]
         if len(filtered_versions) == 0:
             raise RuntimeError(f"Unsupported version {ver} for dataset type {variant}. Supported versions are: {[str(v) for v in list(supported_versions.keys())]}")
-        
+
         matched_version = max(filtered_versions)
 
         self.variant_version = VariantVersion(matched_version, variant)
 
-        print(f"Using RePAIRDataset {self.variant_version}")
+        if self.supervised_mode:
+            assert_supervised_mode(variant, matched_version)
+
+        print(f"RePAIRDataset {self.variant_version}")
 
         version_dict = supported_versions[matched_version]
+
+        #################### Args checks ###################
+
+        if apply_random_rotations:
+            if variant != '2D_SOLVED':
+                raise RuntimeError("Random rotations can only be applied to '2D_SOLVED' dataset type.")
+        
+            if not supervised_mode:
+                raise RuntimeError("Random rotations can only be applied in supervised mode.")
+
+        #################### DataManager setup ###################
+
+        self.datamanager = None
 
         if managed_mode:
             
@@ -91,9 +101,7 @@ class RePAIRDataset:
 
         ################### Load dataset ###################
 
-        #print(f'Loading RePAIRDataset {self.version_type}')
-
-        self.data_path = self.datamanager.data_path if managed_mode else self.root
+        self.data_path = self.datamanager.data_path if self.datamanager is not None else self.root
         
         err_msg = "Check the specified root folder is correct. If the error persist, try to recreate the dataset running with from_scratch=True or delete the STATUS file inside the folder."
         if not self.data_path.exists():
@@ -158,7 +166,7 @@ class RePAIRDataset:
             raise NotImplementedError(f"Metadata getter not implemented for dataset type {self.variant_version.variant}.")
         return getmetadata_2dsolved(puzzle_folder)
 
-    def _get_puzzle_folder(self, key):
+    def _get_puzzle_folder(self, key) -> Union[str, Path]:
         if isinstance(key, int):
             puzzle_folder = self.puzzle_folders_list[key]
         elif isinstance(key, str):

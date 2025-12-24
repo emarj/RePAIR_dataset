@@ -9,9 +9,8 @@ def _reassemble_solution_2d(images, positions, solution_size):
     for img_pil, pos in zip(images, positions):
         x,y,angle = pos
         
-        # pixel_position refers to the position of the centroids, but we want the position of the images
         x_c,y_c = centroid_rgba(img_pil)
-        print(img_pil.width//2 - x_c, img_pil.height//2 - y_c)
+
         x_ = int(x - x_c)
         y_ = int(y - y_c)
         if angle != 0.0:

@@ -11,10 +11,10 @@ from tqdm import tqdm
 
 from repair_dataset.utils import center_and_pad_rgba, centroid_rgba
 
-def patch_2ds_v3_b2(dataset_path : str) -> None:
-    convert_to_v3_b2(dataset_path, patch_mode=True)
+def patch_2ds_v3_b1_randrot(dataset_path : str) -> None:
+    convert_to_v3_b1_randrot(dataset_path, patch_mode=True)
 
-def convert_to_v3_b2(dataset_path : Union[str, Path], output_path : Union[str, Path, None] = None, in_place : bool = False, patch_mode : bool = False) -> None:
+def convert_to_v3_b1_randrot(dataset_path : Union[str, Path], output_path : Union[str, Path, None] = None, in_place : bool = False, patch_mode : bool = False) -> None:
 
         if not patch_mode:
             if in_place and output_path is not None:
@@ -88,7 +88,7 @@ def convert_to_v3_b2(dataset_path : Union[str, Path], output_path : Union[str, P
             if not in_place: 
                 output_json_path = new_puzzle_folder / 'data.json'
             else:
-                output_json_path = new_puzzle_folder / 'data_v3-beta.2.json'
+                output_json_path = new_puzzle_folder / 'data_v3-beta.1.randrot.json'
             
             with open(output_json_path, 'w') as f:
                 json.dump(data, f, indent=4)
@@ -96,7 +96,7 @@ def convert_to_v3_b2(dataset_path : Union[str, Path], output_path : Union[str, P
         with ThreadPoolExecutor(max_workers=8) as executor:
             futures = [executor.submit(process_directory, d) for d in puzzle_folders]
 
-            for _ in tqdm(as_completed(futures), total=len(futures),desc="Converting to v3-beta.2"):
+            for _ in tqdm(as_completed(futures), total=len(futures),desc="Converting to v3-beta.1.randrot"):
                 pass
 
   
@@ -110,4 +110,4 @@ if __name__ == "__main__":
     argparser.add_argument('--in-place', action='store_true',default=False, help="Overwrite data in place")
     args = argparser.parse_args()
 
-    convert_to_v3_b2(args.dataset_path, args.output_path, args.in_place)
+    convert_to_v3_b1_randrot(args.dataset_path, args.output_path, args.in_place)

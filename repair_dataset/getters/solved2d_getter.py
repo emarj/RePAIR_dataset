@@ -32,10 +32,7 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
 
     metadata_version = data.get('metadata_version', 2)
 
-    if metadata_version == '2':
-        # FIXME: why should we do this? If one wants this they should use a patched dataset
-        # this was done before patches were implemented
-        # removing this would break evaluation script, but maybe the code should be moved there
+    if metadata_version == 2:
         data['name'] = puzzle_name
         for i,frag in enumerate(data['fragments']):
             frag_name = Path(frag['filename']).stem
@@ -55,15 +52,11 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
 
     fragments = []
     for i, frag in enumerate(data['fragments']):
-        # if version less than v2.0.2, filenames are .obj, we need to load .png
-        # TODO: we should check the version properly
-        image_path = puzzle_folder / frag['filename'].replace('.obj', '.png')
+        
+        image_path = puzzle_folder / frag['filename']
 
         image = Image.open(image_path).convert('RGBA')
-        image.show()
         image = center_and_pad_rgba(image)
-        image.show()
-        breakpoint()
 
         if apply_random_rotations:
             angle = round(random.uniform(0, 359),2)
