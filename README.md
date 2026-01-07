@@ -50,16 +50,17 @@ downloads will be managed automatically.
 ### Select a patched version
 
 Available versions:
-- v2: vanilla v2, as downloaded from Zenodo **WRONG GT**
-- v2.0.1: fixing some major GT errors on 3 puzzles  **WRONG GT**
-- v2.0.2: fixing filenames in metadata '.obj' -> '.png'  **WRONG GT**
-- v3b: beta version with corrected GT and new metadata version
+- 2: vanilla 2, as downloaded from Zenodo **WRONG GT**
+- 2.0.1: fixing some major GT errors on 3 puzzles  **WRONG GT**
+- 2.0.2: fixing filenames in metadata '.obj' -> '.png'  **WRONG GT**
+- 3-beta.1: beta version with corrected GT and new metadata version
+- 3-beta.1.randrot: like 3-beta.1, but adds random rotations to the dataset
 
 ```python
 from repair_dataset import RePAIRDataset
 
 dataset = RePAIRDataset('.dataset/RePAIR',
-                        version='v3b',
+                        version='3-beta.1.randrot',
                         supervised_mode=True)
 
 print(f"Number of samples: {len(dataset)}")
@@ -75,9 +76,9 @@ To be written
 
 | Type   | Supported | Supervised | Versions |
 |----------|----------|----------|----------|
-| 2D_SOLVED   | ✅   |  ✅  | v2, v2.0.1, v2.0.2, v3b   |
+| 2D_SOLVED   | ✅   |  ✅  | 2, 2.0.1, 2.0.2, 3-beta.1, 3-beta.1.randrot  |
 | 2D_OPEN_DISCOVERY    | ❌   |  -  | -  |
-| 3D_SOLVED    | ✅   | ❌   | v2   |
+| 3D_SOLVED    | ✅   | ❌   | 2   |
 | 3D_OPEN_DISCOVERY    | ❌   | -   | -   |
 
 ### Applying patches
