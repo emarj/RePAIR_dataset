@@ -149,17 +149,11 @@ wheels = [
 [[package]]
 name = "datman"
 version = "0.1.0"
-source = { editable = "../DatasetManager" }
+source = { git = "https://github.com/emarj/datman.git?tag=v0.1.1#ce236387dd63019b4fcef4d818c1bd7ad73bced5" }
 dependencies = [
     { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "tqdm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "requests", specifier = ">=2.32.4" },
-    { name = "tqdm", specifier = ">=4.66.5" },
 ]
 
 [[package]]
@@ -742,7 +736,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "datman", editable = "../DatasetManager" },
+    { name = "datman", git = "https://github.com/emarj/datman.git?tag=v0.1.1" },
     { name = "numpy", specifier = ">=1.21.5" },
     { name = "pillow", specifier = ">=10.4.0" },
     { name = "requests", specifier = ">=2.32.4" },
