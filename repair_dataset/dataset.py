@@ -26,6 +26,7 @@ class RePAIRDataset:
                  managed_mode=True,
                  split=None,
                  supervised_mode=False,
+                 load_images=True,
                  from_scratch=False,
                  skip_verify=False) -> None:
         
@@ -34,6 +35,7 @@ class RePAIRDataset:
         
         self._split = split
         self.supervised_mode = supervised_mode
+        self.load_images = load_images
         self.apply_random_rotations = apply_random_rotations
 
         # iterator state
@@ -179,7 +181,7 @@ class RePAIRDataset:
         puzzle_folder = self._get_puzzle_folder(key)
         # this should not happen, but just in case
         if self.variant_version.variant == '2D_SOLVED' :
-            return getitem_2dsolved(puzzle_folder, self.supervised_mode, self.apply_random_rotations)
+            return getitem_2dsolved(puzzle_folder, self.supervised_mode, self.load_images, self.apply_random_rotations)
         elif self.variant_version.variant == '3D_SOLVED':
             return getitem_3dsolved(puzzle_folder, self.supervised_mode)
         else:

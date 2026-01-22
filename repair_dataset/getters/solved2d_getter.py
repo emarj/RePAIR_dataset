@@ -19,24 +19,29 @@ def getmetadata_2dsolved(puzzle_folder: Union[str, Path]) -> dict:
 
     return data
 
-def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, apply_random_rotations: bool = False) -> Union[dict, tuple]:
+def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, load_images : bool, apply_random_rotations: bool = False) -> Union[dict, tuple]:
 
-    if apply_random_rotations and not supervised_mode:
-        raise RuntimeError("Random rotations can only be applied in supervised mode.")
+    if apply_random_rotations and not (supervised_mode and load_images):
+        raise RuntimeError("Random rotations can only be applied in supervised mode with load_images=True.")
 
     data = getmetadata_2dsolved(puzzle_folder)
 
     puzzle_folder = Path(puzzle_folder)
     puzzle_name = puzzle_folder.name
 
+    data['name'] = puzzle_name
+    del data['metadata_version']
 
-    metadata_version = data.get('metadata_version', 2)
+    for i,frag in enumerate(data['fragments']):
+        img_name = Path(frag['filename'])
+        del data['fragments'][i]['filename']
 
-    if metadata_version == 2:
-        data['name'] = puzzle_name
-        for i,frag in enumerate(data['fragments']):
-            frag_name = Path(frag['filename']).stem
-            data['fragments'][i]['name'] = frag_name
+        if 'name' not in data['fragments'][i]:
+            data['fragments'][i]['name'] = img_name.stem
+
+        #frag_name = data['fragments'][i]['name'] 
+        #data['fragments'][i]['full_name'] = f'{puzzle_name}/{frag_name}'
+        data['fragments'][i]['image_path'] = str((puzzle_folder / img_name).absolute())
 
     if not supervised_mode:
         return data
@@ -52,30 +57,30 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, ap
 
     fragments = []
     for i, frag in enumerate(data['fragments']):
-        
-        image_path = puzzle_folder / frag['filename']
 
-        image = Image.open(image_path).convert('RGBA')
-        image = center_and_pad_rgba(image)
+        frag_ = {key: frag[key] for key in ['idx','name','image_path']}
 
-        if apply_random_rotations:
-            angle = round(random.uniform(0, 359),2)
-            angle_orig = frag['position_2d'][2]
-            new_angle = (angle_orig + angle) % 360.0
+        if load_images:
+            image = Image.open(frag['image_path']).convert('RGBA')
+            image = center_and_pad_rgba(image)
 
 
-            if angle_orig != 0.0:
-                warnings.warn(f"Fragment {frag} already has a non-zero angle {angle_orig}. Adding random rotation of {angle} on top of it. Resulting angle: {new_angle}")
-            
-            data['fragments'][i]['position_2d'][2] = new_angle
-            image = image.rotate(-angle)
+            if apply_random_rotations:
+                angle = round(random.uniform(0, 359),2)
+                angle_orig = frag['position_2d'][2]
+                new_angle = (angle_orig + angle) % 360.0
 
 
-        fragments.append({
-            'idx': frag['idx'],
-            'name': frag.get('name', Path(frag['filename']).stem),
-            'image': image,
-        })
+                if angle_orig != 0.0:
+                    warnings.warn(f"Fragment {frag} already has a non-zero angle {angle_orig}. Adding random rotation of {angle} on top of it. Resulting angle: {new_angle}")
+                
+                data['fragments'][i]['position_2d'][2] = new_angle
+                image = image.rotate(-angle)
+
+            frag_['image'] = image
+
+
+        fragments.append(frag_)
     
     x = {
         'name': puzzle_name,
