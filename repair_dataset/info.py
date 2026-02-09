@@ -9,10 +9,7 @@ from datman.remote import Remote
 
 def assert_supervised_mode(variant: str, version : Version) -> None:
     if variant != '2D_SOLVED':
-        raise RuntimeError("Supervised mode is only supported for '2D_SOLVED' dataset variant.")
-    
-    if version.major < 3:
-        raise RuntimeError(f"Supervised mode is only supported for version 3, but got version {version}.")
+        raise RuntimeError("Supervised mode is only supported for '2D_SOLVED' dataset variant.") 
 
 VARIANTS = {
     '2D_SOLVED': {

@@ -7,7 +7,7 @@ from repair_dataset.utils import create_image_grid
 def main():
 
     dataset = RePAIRDataset('.dataset/RePAIR',
-                               version='3',
+                               version='2',
                                variant='2D_SOLVED',
                                supervised_mode=True,
                                apply_random_rotations=True,
@@ -35,7 +35,7 @@ def main():
     
 
 
-    reassembled_image = reassemble_2d(solved_fragments, solution_size=sample[1]['solution_size'])
+    reassembled_image = reassemble_2d(solved_fragments, solution_size=sample[1].get('solution_size', None))
     reassembled_image.show()
 
 if __name__ == "__main__":

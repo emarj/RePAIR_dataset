@@ -28,10 +28,13 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
 
     puzzle_folder = Path(puzzle_folder)
     puzzle_name = puzzle_folder.name
-
-    data['name'] = puzzle_name
+    
     if 'metadata_version' in data:
         del data['metadata_version']
+    else:
+        data = _convert_from_v2(data)
+
+    data['name'] = puzzle_name
 
     for i,frag in enumerate(data['fragments']):
         img_name = Path(frag['filename'])
@@ -62,7 +65,7 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
     fragments = []
     for i, frag in enumerate(data['fragments']):
 
-        frag_ = {key: frag[key] for key in ['idx','name','image_path']}
+        frag_ = {key: frag[key] for key in ['idx','name','full_name','image_path']}
 
         if load_images:
             image = Image.open(frag['image_path']).convert('RGBA')
@@ -93,3 +96,27 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
 
 
     return x, data
+
+
+def _convert_from_v2(puzzle_data: dict) -> dict:
+
+    if 'transform' in puzzle_data:
+        del puzzle_data['transform']
+
+    for i, frag in enumerate(puzzle_data['fragments']):
+        if 'tol_angle' in frag:
+            del puzzle_data['fragments'][i]['tol_angle']
+    
+        if 'pixel_position' in frag:
+            puzzle_data['fragments'][i]['position_2d'] = frag['pixel_position']
+            del puzzle_data['fragments'][i]['pixel_position']
+            if 'position' in frag:
+                del puzzle_data['fragments'][i]['position']
+        else:
+            raise RuntimeError(f"Fragment {frag} does not have 'pixel_position' field.")
+        
+        if 'file' in frag:
+            puzzle_data['fragments'][i]['file'] = puzzle_data['fragments'][i]['file'].replace('.obj', '.png')
+
+    return puzzle_data
+    
