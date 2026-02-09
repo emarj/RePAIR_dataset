@@ -37,11 +37,14 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
         img_name = Path(frag['filename'])
         del data['fragments'][i]['filename']
 
-        if 'name' not in data['fragments'][i]:
+        if 'name' not in frag:
             data['fragments'][i]['name'] = img_name.stem
 
-        #frag_name = data['fragments'][i]['name'] 
-        #data['fragments'][i]['full_name'] = f'{puzzle_name}/{frag_name}'
+        frag_name = data['fragments'][i]['name']
+
+        if 'full_name' not in frag:
+            data['fragments'][i]['full_name'] = f'{puzzle_name}/{frag_name}'
+
         data['fragments'][i]['image_path'] = str((puzzle_folder / img_name).absolute())
 
     if not supervised_mode:
