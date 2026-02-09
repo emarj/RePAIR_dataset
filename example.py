@@ -33,9 +33,10 @@ def main():
     for i, frag in enumerate(solved_fragments):
         solved_fragments[i]['position_2d'] = sample[1]['fragments'][i]['position_2d']
     
+    solution_size = sample[1].get('solution_size', None) if False else None
 
 
-    reassembled_image = reassemble_2d(solved_fragments, solution_size=sample[1].get('solution_size', None))
+    reassembled_image = reassemble_2d(solved_fragments, solution_size=solution_size)
     reassembled_image.show()
 
 if __name__ == "__main__":

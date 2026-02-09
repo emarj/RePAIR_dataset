@@ -114,9 +114,14 @@ def _convert_from_v2(puzzle_data: dict) -> dict:
                 del puzzle_data['fragments'][i]['position']
         else:
             raise RuntimeError(f"Fragment {frag} does not have 'pixel_position' field.")
+
         
-        if 'file' in frag:
-            puzzle_data['fragments'][i]['file'] = puzzle_data['fragments'][i]['file'].replace('.obj', '.png')
+        if 'filename' in frag:
+            puzzle_data['fragments'][i]['filename'] = puzzle_data['fragments'][i]['filename'].replace('.obj', '.png')
+        
+    if 'solution_size' not in puzzle_data:
+        img_path = Path( puzzle_data['path']) / puzzle_data['fragments'][0]['filename']
+        puzzle_data['solution_size'] = Image.open(img_path).size
 
     return puzzle_data
     
