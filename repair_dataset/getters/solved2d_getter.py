@@ -30,7 +30,8 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
     puzzle_name = puzzle_folder.name
 
     data['name'] = puzzle_name
-    del data['metadata_version']
+    if 'metadata_version' in data:
+        del data['metadata_version']
 
     for i,frag in enumerate(data['fragments']):
         img_name = Path(frag['filename'])
