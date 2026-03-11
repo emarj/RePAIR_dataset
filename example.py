@@ -10,7 +10,7 @@ def main():
                                version='2',
                                variant='2D_SOLVED',
                                supervised_mode=True,
-                               apply_random_rotations=True,
+                               apply_random_rotations=False,
                                )
 
     print(f"Number of samples in dataset: {len(dataset)}")
@@ -22,6 +22,8 @@ def main():
    
     
     sample = dataset[idx]
+
+    # sample[0]['fragments'][0]['image'].show()
     print(sample)
 
     #create_image_grid(sample[0]['fragments']).show()

@@ -29,7 +29,8 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
     puzzle_folder = Path(puzzle_folder)
     puzzle_name = puzzle_folder.name
     
-    if 'metadata_version' in data:
+    v2 = 'metadata_version' not in data
+    if not v2:
         del data['metadata_version']
     else:
         data = _convert_from_v2(data)
@@ -60,6 +61,8 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
     # x contains in-memory images and few metadata
     # data contains the original metadata dict with the GT
 
+    if apply_random_rotations and v2:
+        raise RuntimeError("Random rotations are not supported for v2 puzzles.")
 
 
     fragments = []
@@ -69,8 +72,9 @@ def getitem_2dsolved(puzzle_folder : Union[str,Path], supervised_mode : bool, lo
 
         if load_images:
             image = Image.open(frag['image_path']).convert('RGBA')
-            image = center_and_pad_rgba(image)
 
+            if not v2:
+                image = center_and_pad_rgba(image)
 
             if apply_random_rotations:
                 angle = round(random.uniform(0, 359),2)
